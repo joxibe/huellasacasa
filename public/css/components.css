@@ -1,0 +1,650 @@
+/* ==========================================================================
+   HUELLAS A CASA — UI COMPONENTS (Theme System)
+   Componentes visuales: Tarjetas Pet Care, Badges, Chips, Modales y 4 Estados UI
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   -1. DISCLAIMER BANNER (Aviso de iniciativa no oficial)
+   -------------------------------------------------------------------------- */
+.disclaimer-banner {
+  background: #FFF3EC;
+  color: #7C3AED;
+  font-size: var(--font-size-xs);
+  padding: 6px 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  line-height: 1.4;
+}
+
+.disclaimer-banner a {
+  font-weight: 600;
+  color: #6D28D9;
+  text-decoration: underline;
+}
+
+.disclaimer-banner a:hover {
+  color: var(--color-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
+   -0. CHECKBOX DE CONSENTIMIENTO & FOOTER
+   -------------------------------------------------------------------------- */
+.consent-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  cursor: pointer;
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-md);
+  user-select: none;
+}
+
+.consent-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.consent-checkbox a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.consent-error-text {
+  color: #DC2626;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  margin-top: -8px;
+  margin-bottom: var(--space-sm);
+  display: none;
+}
+
+.app-footer {
+  text-align: center;
+  padding: var(--space-lg) var(--space-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-xl);
+}
+
+.app-footer a {
+  color: var(--color-text-primary);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.app-footer-credit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-top: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   0. SELECTOR DE CIUDAD (Header Dropdown Prominente)
+   -------------------------------------------------------------------------- */
+.city-selector-dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  border: 1px solid var(--status-perdido-border);
+  border-radius: var(--radius-full);
+  padding: 2px 20px 2px 8px;
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23C9471E' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  transition: all var(--transition-fast);
+  outline: none;
+  max-width: 105px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.city-selector-dropdown:hover, .city-selector-dropdown:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(255, 111, 67, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   1. CHIPS & FILTROS RÁPIDOS (Horizontal Scroll Bar)
+   -------------------------------------------------------------------------- */
+.filter-bar-wrapper {
+  margin: calc(-1 * var(--space-xs)) calc(-1 * var(--space-md)) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.filter-bar-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.filter-chips-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: max-content;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+
+.chip.active {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.chip-icon {
+  font-size: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   2. BADGES DE ESTADO (6 Estados Diferenciados)
+   -------------------------------------------------------------------------- */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+}
+
+.badge-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+}
+
+/* 1. Perdido */
+.badge-status[data-status="perdido"] {
+  background-color: var(--status-perdido-bg);
+  color: var(--status-perdido-color);
+  border: 1px solid var(--status-perdido-border);
+}
+
+/* 2. Encontrado */
+.badge-status[data-status="encontrado"] {
+  background-color: var(--status-encontrado-bg);
+  color: var(--status-encontrado-color);
+  border: 1px solid var(--status-encontrado-border);
+}
+
+/* 3. Coincidencia sugerida */
+.badge-status[data-status="coincidencia_sugerida"] {
+  background-color: var(--status-coincidencia-bg);
+  color: var(--status-coincidencia-color);
+  border: 1px solid var(--status-coincidencia-border);
+}
+
+/* 4. Confirmado por ambas partes */
+.badge-status[data-status="confirmado_ambas_partes"] {
+  background-color: var(--status-confirmado-bg);
+  color: var(--status-confirmado-color);
+  border: 1px solid var(--status-confirmado-border);
+}
+
+/* 5. Reunido */
+.badge-status[data-status="reunido"] {
+  background-color: var(--status-reunido-bg);
+  color: var(--status-reunido-color);
+  border: 1px solid var(--status-reunido-border);
+}
+
+/* 6. En adopción */
+.badge-status[data-status="en_adopcion"] {
+  background-color: var(--status-adopcion-bg);
+  color: var(--status-adopcion-color);
+  border: 1px solid var(--status-adopcion-border);
+}
+
+/* 7. Adoptado */
+.badge-status[data-status="adoptado"] {
+  background-color: var(--status-adoptado-bg);
+  color: var(--status-adoptado-color);
+  border: 1px solid var(--status-adoptado-border);
+}
+
+/* --------------------------------------------------------------------------
+   3. TARJETA DE MASCOTA (Pet Card — Dribbble Inspired)
+   -------------------------------------------------------------------------- */
+.pet-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.pet-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.pet-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.pet-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-color: var(--color-bg-muted);
+  overflow: hidden;
+}
+
+.pet-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-normal);
+}
+
+.pet-card:hover .pet-card-img {
+  transform: scale(1.03);
+}
+
+.pet-card-status-badge {
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.pet-card-urgent-pill {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  z-index: 2;
+  background-color: #DC2626;
+  color: #FFFFFF;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pet-card-content {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pet-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.pet-card-name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.pet-card-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.pet-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.pet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.pet-card-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.pet-card-location svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.pet-card-details {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pet-card-footer {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* --------------------------------------------------------------------------
+   4. BOTONES PRIMARIOS Y SECUNDARIOS (Touch Target >= 48px)
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 48px;
+  padding: var(--space-xs) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-fast);
+  user-select: none;
+  width: 100%;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(255, 111, 67, 0.2);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-bg-muted);
+}
+
+.btn-whatsapp {
+  background-color: #25D366;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+}
+
+.btn-whatsapp:hover {
+  background-color: #20BA5A;
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+  width: auto;
+}
+
+.btn-icon-only {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   5. LOS 4 ESTADOS DE UI (Cargando, Vacío, Error, Éxito)
+   -------------------------------------------------------------------------- */
+
+/* Estado 1: Cargando (Skeleton Shimmer) */
+.skeleton-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skeleton-box {
+  background: linear-gradient(90deg, #F1EFEA 25%, #E8E5DF 50%, #F1EFEA 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 20px;
+}
+
+.skeleton-text {
+  width: 90%;
+  height: 14px;
+}
+
+/* Estado 2: Vacío */
+.ui-state-empty {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.ui-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-2xs);
+}
+
+.ui-state-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.ui-state-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  max-width: 280px;
+}
+
+/* Estado 3: Error */
+.ui-state-error {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  background-color: #FEF2F2;
+  border-radius: var(--radius-xl);
+  border: 1px solid #FECACA;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.ui-state-error .ui-state-title {
+  color: #991B1B;
+}
+
+.ui-state-error .ui-state-desc {
+  color: #B91C1C;
+}
+
+/* --------------------------------------------------------------------------
+   6. MODALES Y BOTTOM SHEETS (Mobile-Friendly)
+   -------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-normal);
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-sheet {
+  background-color: var(--color-bg-card);
+  width: 100%;
+  max-width: var(--max-content-width);
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  padding: var(--space-lg) var(--space-md) var(--space-2xl);
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform var(--transition-normal);
+}
+
+.modal-overlay.open .modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-handle {
+  width: 40px;
+  height: 4px;
+  background-color: var(--color-border);
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--space-md);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+}

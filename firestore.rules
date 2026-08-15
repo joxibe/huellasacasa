@@ -1,0 +1,174 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función auxiliar: Usuario autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Función auxiliar: Es el dueño del recurso
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Función auxiliar: Validación declarativa de cuotas (3 por tipo, 9 total) en /usuarios/{uid}
+    function cumpleCuotaCreacion(tipo) {
+      let userDocPath = /databases/$(database)/documents/usuarios/$(request.auth.uid);
+      return !exists(userDocPath) || (
+        (tipo == 'perdido' && (!('perdidosActivosCount' in get(userDocPath).data) || get(userDocPath).data.perdidosActivosCount < 3)) ||
+        (tipo == 'encontrado' && (!('encontradosActivosCount' in get(userDocPath).data) || get(userDocPath).data.encontradosActivosCount < 3)) ||
+        (tipo == 'en_adopcion' && (!('adopcionActivosCount' in get(userDocPath).data) || get(userDocPath).data.adopcionActivosCount < 3))
+      ) && (!('reportesActivosCount' in get(userDocPath).data) || get(userDocPath).data.reportesActivosCount < 9);
+    }
+
+    // Función auxiliar: Valida que los conteos solo se modifiquen en incrementos/decrementos de ±1 o se mantengan
+    function deltaValido(nuevo, anterior) {
+      return nuevo == anterior || nuevo == anterior + 1 || nuevo == anterior - 1;
+    }
+
+    // 1. Colección de usuarios: perfil y conteo blindado de reportes activos
+    match /usuarios/{uid} {
+      allow read: if isAuthenticated();
+      
+      // Creación: Inicialización consistente (conteo total = suma de subtotales >= 0)
+      allow create: if isOwner(uid)
+                    && request.resource.data.perdidosActivosCount >= 0
+                    && request.resource.data.encontradosActivosCount >= 0
+                    && request.resource.data.adopcionActivosCount >= 0
+                    && request.resource.data.reportesActivosCount == (
+                         request.resource.data.perdidosActivosCount +
+                         request.resource.data.encontradosActivosCount +
+                         request.resource.data.adopcionActivosCount
+                       );
+
+      // Edición: Los contadores NO pueden reescribirse arbitrariamente (solo deltas de ±1)
+      allow update: if isOwner(uid)
+                    && request.resource.data.perdidosActivosCount >= 0
+                    && request.resource.data.encontradosActivosCount >= 0
+                    && request.resource.data.adopcionActivosCount >= 0
+                    && deltaValido(request.resource.data.perdidosActivosCount, resource.data.perdidosActivosCount)
+                    && deltaValido(request.resource.data.encontradosActivosCount, resource.data.encontradosActivosCount)
+                    && deltaValido(request.resource.data.adopcionActivosCount, resource.data.adopcionActivosCount)
+                    && request.resource.data.reportesActivosCount == (
+                         request.resource.data.perdidosActivosCount +
+                         request.resource.data.encontradosActivosCount +
+                         request.resource.data.adopcionActivosCount
+                       );
+    }
+
+    // 2. Colección pública de reportes
+    match /reportes/{reporteId} {
+      // Lectura pública para cualquier visitante
+      allow read: if true;
+
+      // Creación: Solo autenticados, validando tipos, ciudad y cuota máxima en Firestore
+      allow create: if isAuthenticated() 
+                    && request.resource.data.creadorUid == request.auth.uid
+                    && request.resource.data.ciudad is string
+                    && request.resource.data.ciudad.size() > 0
+                    && request.resource.data.ciudad.size() <= 50
+                    && request.resource.data.ciudadLower is string
+                    && request.resource.data.ciudadLower.size() > 0
+                    && request.resource.data.tipo in ['perdido', 'encontrado', 'en_adopcion']
+                    && request.resource.data.estado == request.resource.data.tipo
+                    && cumpleCuotaCreacion(request.resource.data.tipo);
+
+      // Edición: Reglas estrictas de propiedad y confirmación bilateral
+      allow update: if isAuthenticated() && (
+        // CASO A: El creador del reporte editando su propio reporte
+        (
+          request.auth.uid == resource.data.creadorUid &&
+          request.resource.data.creadorUid == resource.data.creadorUid &&
+          request.resource.data.tipo == resource.data.tipo &&
+          // El creador NO puede alterar la bandera de la contraparte
+          request.resource.data.confirmadoPorContraparte == resource.data.confirmadoPorContraparte &&
+          (
+            // A1: Edición normal de datos (mismo estado o campos básicos sin vínculo pendiente)
+            (request.resource.data.estado in ['perdido', 'encontrado', 'en_adopcion'] && resource.data.coincidenciaConReporteId == null) ||
+            // A2: Cierre directo a 'reunido' o 'adoptado': SOLO permitido si NO tiene vínculo activo (coincidenciaConReporteId == null) O si ya está en 'confirmado_ambas_partes'
+            (request.resource.data.estado in ['reunido', 'adoptado'] && (resource.data.estado == 'confirmado_ambas_partes' || resource.data.coincidenciaConReporteId == null)) ||
+            // A3: Estado coincidencia_sugerida (voto individual del creador sin romper el vínculo)
+            (request.resource.data.estado == 'coincidencia_sugerida' && request.resource.data.coincidenciaConReporteId == resource.data.coincidenciaConReporteId) ||
+            // A4: El creador rechazando/limpiando el vínculo pendiente (vuelve al tipo original con coincidenciaConReporteId en null)
+            (request.resource.data.estado == resource.data.tipo && request.resource.data.coincidenciaConReporteId == null && request.resource.data.confirmadoPorCreador == false && request.resource.data.confirmadoPorContraparte == false) ||
+            // A5: Confirmación bilateral completa (ambas partes en true)
+            (
+              request.resource.data.estado == 'confirmado_ambas_partes' &&
+              request.resource.data.confirmadoPorCreador == true &&
+              request.resource.data.confirmadoPorContraparte == true
+            )
+          )
+        ) ||
+        // CASO B1: Tercero sugiriendo coincidencia inicial
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'coincidenciaConReporteId', 'confirmadoPorContraparte', 'confirmadoPorCreador', 'fechaActualizacion']) &&
+          request.resource.data.creadorUid == resource.data.creadorUid &&
+          request.resource.data.tipo == resource.data.tipo &&
+          resource.data.coincidenciaConReporteId == null &&
+          request.resource.data.coincidenciaConReporteId is string &&
+          request.resource.data.estado == 'coincidencia_sugerida' &&
+          request.resource.data.confirmadoPorCreador == false &&
+          request.resource.data.confirmadoPorContraparte == false
+        ) ||
+        // CASO B2: La contraparte legítima (dueño del reporte vinculado) votando / confirmando
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'coincidenciaConReporteId', 'confirmadoPorContraparte', 'confirmadoPorCreador', 'fechaActualizacion']) &&
+          request.resource.data.creadorUid == resource.data.creadorUid &&
+          request.resource.data.tipo == resource.data.tipo &&
+          resource.data.coincidenciaConReporteId != null &&
+          request.resource.data.coincidenciaConReporteId == resource.data.coincidenciaConReporteId &&
+          // VERIFICACIÓN ESTRICTA: El actor ES el creador del reporte vinculado
+          request.auth.uid == get(/databases/$(database)/documents/reportes/$(resource.data.coincidenciaConReporteId)).data.creadorUid &&
+          // La contraparte NO puede alterar la bandera del creador
+          request.resource.data.confirmadoPorCreador == resource.data.confirmadoPorCreador &&
+          (
+            // Voto individual
+            request.resource.data.estado == 'coincidencia_sugerida' ||
+            // Voto que completa la confirmación bilateral
+            (
+              request.resource.data.estado == 'confirmado_ambas_partes' &&
+              request.resource.data.confirmadoPorCreador == true &&
+              request.resource.data.confirmadoPorContraparte == true
+            )
+          )
+        ) ||
+        // CASO B3: La contraparte legítima rechazando la coincidencia
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'coincidenciaConReporteId', 'confirmadoPorContraparte', 'confirmadoPorCreador', 'fechaActualizacion']) &&
+          request.resource.data.creadorUid == resource.data.creadorUid &&
+          request.resource.data.tipo == resource.data.tipo &&
+          resource.data.coincidenciaConReporteId != null &&
+          request.auth.uid == get(/databases/$(database)/documents/reportes/$(resource.data.coincidenciaConReporteId)).data.creadorUid &&
+          request.resource.data.coincidenciaConReporteId == null &&
+          request.resource.data.confirmadoPorCreador == false &&
+          request.resource.data.confirmadoPorContraparte == false &&
+          request.resource.data.estado == resource.data.tipo
+        )
+      );
+
+      // Eliminación: Solo el creador
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.creadorUid;
+
+      // 3. Subcolección privada: Contacto y Seguridad
+      // 3a. Datos de contacto: Cualquier usuario autenticado puede leer para contactar al publicador
+      match /privado/contacto {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() 
+                     && request.auth.uid == get(/databases/$(database)/documents/reportes/$(reporteId)).data.creadorUid;
+      }
+
+      // 3b. Seña secreta de seguridad: ÚNICAMENTE accesible por el creador original del reporte
+      match /privado/seguridad {
+        allow read, write: if isAuthenticated() 
+                     && request.auth.uid == get(/databases/$(database)/documents/reportes/$(reporteId)).data.creadorUid;
+      }
+    }
+
+    // 4. Reportes de abuso / moderación comunitaria
+    match /reportes_abuso/{reporteAbusoId} {
+      allow create: if isAuthenticated() && request.resource.data.usuarioDenuncianteUid == request.auth.uid;
+      allow read: if false; // Solo accesible por backend/admin
+    }
+  }
+}

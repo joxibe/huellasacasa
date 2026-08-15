@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /reportes/{reporteId}/{fileName} {
+      // Lectura pública de fotos de mascotas para el explorador
+      allow read: if true;
+
+      // Subida inicial de foto (el archivo NO debe existir previamente en Storage)
+      allow create: if request.auth != null
+                    && resource == null
+                    && request.resource.size < 500 * 1024
+                    && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)');
+
+      // Sobrescritura permitida ÚNICAMENTE al creador original del reporte registrado en Firestore
+      allow update: if request.auth != null
+                    && resource != null
+                    && request.resource.size < 500 * 1024
+                    && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)')
+                    && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid;
+
+      // Eliminación permitida ÚNICAMENTE al creador original del reporte registrado en Firestore
+      allow delete: if request.auth != null
+                    && resource != null
+                    && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Publicar Reporte — Huellas a Casa</title>
+  <meta name="description" content="Reporta una mascota perdida o encontrada en Cali." />
+
+  <link rel="icon" type="image/png" href="public/assets/img/favicon.png" />
+  <link rel="apple-touch-icon" href="public/assets/img/favicon.png" />
+
+  <link rel="stylesheet" href="public/css/theme.css" />
+  <link rel="stylesheet" href="public/css/layout.css" />
+  <link rel="stylesheet" href="public/css/components.css" />
+  <link rel="stylesheet" href="public/css/forms.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Disclaimer Banner (Iniciativa ciudadana) -->
+    <div class="disclaimer-banner" role="note">
+      <span>
+        🐾 Huellas a Casa es una iniciativa ciudadana, no oficial. Para reportar personas desaparecidas usa
+        <a href="https://colombiatebusca.com" target="_blank" rel="noopener">Colombia Te Busca</a> o la Cruz Roja.
+      </span>
+    </div>
+
+    <!-- Header Superior -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand-section">
+          <a href="index.html" style="font-size: 1.2rem; margin-right: 4px;">&larr;</a>
+          <div class="brand-title">
+            <span>Nuevo Reporte</span>
+            <span class="brand-subtitle">Cali, Colombia</span>
+          </div>
+        </div>
+
+        <nav class="desktop-nav-links" aria-label="Navegación de escritorio">
+          <a href="index.html" class="desktop-nav-link">Explorar</a>
+          <a href="como-funciona.html" class="desktop-nav-link">¿Cómo funciona?</a>
+          <a href="privacidad.html" class="desktop-nav-link">Privacidad</a>
+          <a href="publicar.html" class="desktop-nav-link active">+ Publicar Mascota</a>
+          <a href="mis-reportes.html" class="desktop-nav-link">Mis Reportes</a>
+        </nav>
+
+        <div class="header-right-actions">
+          <button id="user-header-btn" class="user-avatar-btn" aria-label="Cuenta de usuario"></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido Principal: Formulario -->
+    <main class="app-main">
+      <div class="form-container-card">
+        <!-- Selector Tipo: Perdido vs Encontrado vs En Adopción -->
+        <div class="type-toggle-wrapper">
+          <button type="button" id="btn-toggle-lost" class="type-toggle-btn active-lost">
+            🔴 Perdí mi Mascota
+          </button>
+          <button type="button" id="btn-toggle-found" class="type-toggle-btn">
+            🔵 Encontré Mascota
+          </button>
+          <button type="button" id="btn-toggle-adopt" class="type-toggle-btn">
+            💜 Dar en Adopción
+          </button>
+        </div>
+
+        <form id="form-publicar-reporte">
+        <!-- 1. Foto de la Mascota -->
+        <div class="form-group">
+          <label class="form-label">Foto de la mascota <span style="color: var(--color-primary);">*</span></label>
+          <input type="file" id="input-foto-mascota" accept="image/*" style="display: none;" />
+          
+          <div id="photo-upload-zone" class="photo-upload-container">
+            <div class="photo-upload-placeholder">
+              <div class="photo-upload-icon">📷</div>
+              <div style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                Toca para subir o tomar foto
+              </div>
+              <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                Se comprimirá automáticamente a &lt;300KB para ahorrar datos
+              </div>
+            </div>
+          </div>
+
+          <div id="photo-preview-container" style="display: none;">
+            <img id="photo-preview-img" class="photo-preview-image" alt="Previsualización" />
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+              <span id="photo-compression-badge" class="photo-compression-badge">⚡ Optimizada</span>
+              <button type="button" id="btn-cambiar-foto" class="btn btn-secondary btn-sm" style="width: auto;">
+                Cambiar foto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Especie -->
+        <div class="form-group">
+          <label class="form-label">Especie <span style="color: var(--color-primary);">*</span></label>
+          <div class="chip-selector-group">
+            <label>
+              <input type="radio" name="especie" value="perro" class="chip-radio" checked />
+              <span class="chip-radio-label">🐶 Perro</span>
+            </label>
+            <label>
+              <input type="radio" name="especie" value="gato" class="chip-radio" />
+              <span class="chip-radio-label">🐱 Gato</span>
+            </label>
+            <label>
+              <input type="radio" name="especie" value="otro" class="chip-radio" />
+              <span class="chip-radio-label">🐾 Otro</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Tamaño y Sexo -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm);">
+          <div class="form-group">
+            <label class="form-label">Tamaño <span style="color: var(--color-primary);">*</span></label>
+            <select id="select-tamano" name="tamano" class="form-control" required>
+              <option value="pequeno">Pequeño</option>
+              <option value="mediano" selected>Mediano</option>
+              <option value="grande">Grande</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sexo <span style="color: var(--color-primary);">*</span></label>
+            <select id="select-sexo" name="sexo" class="form-control" required>
+              <option value="macho" selected>Macho</option>
+              <option value="hembra">Hembra</option>
+              <option value="no_se">No sé</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4. Nombre y Raza -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm);">
+          <div class="form-group">
+            <label class="form-label"><span id="label-nombre-mascota">Nombre de tu mascota</span> <span class="form-label-optional">(Opcional)</span></label>
+            <input type="text" id="input-nombre" class="form-control" placeholder="Ej: Toby" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Raza <span class="form-label-optional">(Opcional)</span></label>
+            <input type="text" id="input-raza" class="form-control" placeholder="Ej: Criollo" />
+          </div>
+        </div>
+
+        <!-- 5. Colores Principales -->
+        <div class="form-group">
+          <label class="form-label">Color(es) <span style="color: var(--color-primary);">*</span></label>
+          <input type="text" id="input-color" class="form-control" placeholder="Ej: Negro con pecho blanco" required />
+        </div>
+
+        <!-- 6. Ubicación (Ciudad obligatoria + Barrio opcional) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm);">
+          <div class="form-group">
+            <label class="form-label">Ciudad o Municipio <span style="color: var(--color-primary);">*</span></label>
+            <select id="select-ciudad" name="ciudad" class="form-control" required>
+              <optgroup label="🚨 Zona de emergencia">
+                <option value="Cali" selected>Cali</option>
+                <option value="Pereira">Pereira</option>
+                <option value="Manizales">Manizales</option>
+                <option value="Quibdó">Quibdó</option>
+                <option value="Armenia">Armenia</option>
+              </optgroup>
+              <optgroup label="🇨🇴 Otras ciudades">
+                <option value="Bogotá">Bogotá</option>
+                <option value="Medellín">Medellín</option>
+                <option value="Barranquilla">Barranquilla</option>
+                <option value="Cartagena">Cartagena</option>
+                <option value="Bucaramanga">Bucaramanga</option>
+                <option value="Cúcuta">Cúcuta</option>
+                <option value="Ibagué">Ibagué</option>
+                <option value="Villavicencio">Villavicencio</option>
+                <option value="Pasto">Pasto</option>
+                <option value="Montería">Montería</option>
+                <option value="Neiva">Neiva</option>
+                <option value="Popayán">Popayán</option>
+                <option value="Valledupar">Valledupar</option>
+                <option value="Santa Marta">Santa Marta</option>
+                <option value="Sincelejo">Sincelejo</option>
+                <option value="Tunja">Tunja</option>
+                <option value="Riohacha">Riohacha</option>
+                <option value="Florencia">Florencia</option>
+                <option value="Yopal">Yopal</option>
+              </optgroup>
+              <option value="__otra__">✏️ Otra ciudad / municipio...</option>
+            </select>
+            <input 
+              type="text" 
+              id="input-ciudad-otra" 
+              class="form-control" 
+              placeholder="Escribe el nombre de tu ciudad/municipio" 
+              style="display: none; margin-top: 6px;" 
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Barrio / Sector <span class="form-label-optional">(Opcional)</span></label>
+            <input type="text" id="input-barrio" class="form-control" placeholder="Ej: San Antonio, Circunvalar..." />
+          </div>
+        </div>
+        <span class="form-helper" style="margin-top: -8px; margin-bottom: var(--space-sm); display: block;">
+          🔒 Por seguridad, nunca coloques dirección exacta ni número de casa.
+        </span>
+
+        <!-- 7. Fecha -->
+        <div class="form-group">
+          <label class="form-label">Fecha del suceso <span style="color: var(--color-primary);">*</span></label>
+          <input type="date" id="input-fecha" class="form-control" required />
+        </div>
+
+        <!-- 8. Señas Visibles Públicas -->
+        <div class="form-group">
+          <label class="form-label">Señas particulares visibles <span class="form-label-optional">(Público)</span></label>
+          <textarea id="input-senas-visibles" class="form-control" placeholder="Ej: Collar rojo sin placa, mancha en oreja derecha, cicatriz..."></textarea>
+        </div>
+
+        <!-- 9. SEÑA PRIVADA DE VERIFICACIÓN (CRÍTICA) -->
+        <div class="form-group" style="background-color: #FFFBEB; border: 1px solid #FDE68A; padding: var(--space-sm); border-radius: var(--radius-md);">
+          <label class="form-label" style="color: #92400E;">
+            🔒 Seña de verificación secreta <span style="color: var(--color-primary);">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="input-sena-privada" 
+            class="form-control" 
+            placeholder="Ej: Lunar en el paladar, cicatriz debajo de la pata trasera..." 
+            style="background: #FFFFFF;"
+            required 
+          />
+          <div class="privacy-alert-text" style="margin-top: 4px;">
+            <strong>Solo visible para ti:</strong> Cuando alguien te contacte diciendo que es el dueño o que la tiene, le pedirás describir esta seña antes de acordar la entrega.
+          </div>
+        </div>
+
+        <!-- 10. Campos Exclusivos de Encontrado -->
+        <div id="campos-exclusivos-encontrado" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">¿Requiere atención veterinaria urgente? <span style="color: var(--color-primary);">*</span></label>
+            <select id="select-necesita-vet" class="form-control">
+              <option value="no" selected>No, está estable</option>
+              <option value="si">🚨 Sí, está herido/necesita auxilio</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Situación actual de resguardo <span style="color: var(--color-primary);">*</span></label>
+            <select id="select-situacion-lugar" class="form-control">
+              <option value="en_casa_temporal" selected>🏠 Está en casa temporal segura</option>
+              <option value="suelta_en_zona">⚠️ Sigue suelta en la zona</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 10b. Campos Exclusivos de Adopción -->
+        <div id="campos-exclusivos-adopcion" style="display: none;">
+          <div style="background-color: var(--status-adopcion-bg); border: 1px solid var(--status-adopcion-border); padding: var(--space-sm); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+            <div style="font-size: var(--font-size-xs); font-weight: 700; color: var(--status-adopcion-color); margin-bottom: 2px;">
+              💜 Publicación para Adopción Responsable
+            </div>
+            <p style="font-size: var(--font-size-xs); color: #5B21B6; margin: 0; line-height: 1.3;">
+              Publica esta mascota para encontrarle una familia definitiva con tenencia responsable y seguimiento.
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm);">
+            <div class="form-group">
+              <label class="form-label">¿Está esterilizado/a?</label>
+              <select id="select-esterilizado" class="form-control">
+                <option value="si">Sí, esterilizado/a</option>
+                <option value="no">No</option>
+                <option value="no_se" selected>No sé / Por confirmar</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">¿Vacunación al día?</label>
+              <select id="select-vacunado" class="form-control">
+                <option value="si">Sí, vacunas al día</option>
+                <option value="parcial">Parcial</option>
+                <option value="no_se" selected>No sé / Por confirmar</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 11. Datos de Contacto -->
+        <div class="form-group">
+          <label class="form-label">Nombre de contacto <span class="form-label-optional">(Opcional)</span></label>
+          <input type="text" id="input-nombre-dueno" class="form-control" placeholder="Tu nombre" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Número de WhatsApp / Teléfono <span style="color: var(--color-primary);">*</span></label>
+          <input type="tel" id="input-telefono" class="form-control" placeholder="Ej: 3161234567" required />
+          <span class="form-helper">Solo los usuarios con sesión de Google activa podrán pulsar contactar.</span>
+        </div>
+
+        <!-- Checkbox de Consentimiento (Ley 1581 de 2012) -->
+        <label class="consent-checkbox" for="consentimiento-datos">
+          <input type="checkbox" id="consentimiento-datos" required />
+          <span>
+            He leído y acepto el <a href="privacidad.html" target="_blank">aviso de privacidad</a>, y autorizo el tratamiento de mis datos personales para los fines de esta plataforma.
+          </span>
+        </label>
+        <div id="consentimiento-error" class="consent-error-text">
+          ⚠️ Debes aceptar el aviso de privacidad para publicar.
+        </div>
+
+        <!-- Botón de Envío -->
+        <div style="margin-top: var(--space-md); margin-bottom: var(--space-md);">
+          <button type="submit" id="btn-submit-reporte" class="btn btn-primary">
+            🐾 Publicar Reporte
+          </button>
+        </div>
+      </form>
+      </div>
+
+      <!-- Footer con Crédito -->
+      <footer class="app-footer">
+        <div>
+          <a href="como-funciona.html">¿Cómo funciona?</a> &bull; 
+          <a href="privacidad.html">Aviso de Privacidad</a> &bull; 
+          Emergencia Colombia 2026
+        </div>
+        <div class="app-footer-credit">
+          🐾 Hecho con ❤️ por <span>DevIaWorks</span>
+        </div>
+      </footer>
+    </main>
+
+    <!-- Bottom Navigation Bar Móvil / Dock -->
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Explorar</span>
+      </a>
+
+      <a href="como-funciona.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Guía</span>
+      </a>
+
+      <a href="publicar.html" class="nav-item nav-item-fab active" aria-label="Publicar reporte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </a>
+
+      <a href="mis-reportes.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Reportes</span>
+      </a>
+
+      <a href="privacidad.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <span>Privacidad</span>
+      </a>
+    </nav>
+  </div>
+
+  <script type="module">
+    import { inicializarFormulario } from './public/js/ui/formulario.ui.js';
+    import './public/js/app.js';
+    document.getElementById('input-fecha').value = new Date().toISOString().split('T')[0];
+    inicializarFormulario();
+  </script>
+</body>
+</html>

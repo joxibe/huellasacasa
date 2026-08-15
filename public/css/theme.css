@@ -1,0 +1,155 @@
+/* ==========================================================================
+   HUELLAS A CASA — THEME SYSTEM (CSS Tokens & Design System)
+   Inspirado en la calidez y claridad de "Pet Care Mobile App" (Dribbble).
+   Optimizado para 0 peticiones externas y bajo consumo de datos (3G).
+   ========================================================================== */
+
+:root {
+  /* --- Tipografía 100% Nativa (0 KB de fuentes externas) --- */
+  --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px - Base para inputs táctiles */
+  --font-size-md: 1.125rem;   /* 18px */
+  --font-size-lg: 1.25rem;    /* 20px */
+  --font-size-xl: 1.5rem;     /* 24px */
+  --font-size-2xl: 1.75rem;   /* 28px */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* --- Superficies y Neutros --- */
+  --color-bg-app: #FAF8F5;          /* Fondo cálido y relajante */
+  --color-bg-card: #FFFFFF;         /* Blanco puro de tarjetas */
+  --color-bg-muted: #F1EFEA;        /* Superficie neutra secundaria */
+  --color-bg-elevated: #FFFFFF;
+  
+  --color-text-primary: #0F172A;    /* Slate oscuro (WCAG AAA) */
+  --color-text-secondary: #64748B;  /* Slate medio para metadatos */
+  --color-text-muted: #94A3B8;      /* Gris claro para placeholders */
+  --color-border: #E8E5DF;          /* Borde sutil y cálido */
+  --color-border-focus: #FF6F43;    /* Borde de foco */
+
+  /* --- Paleta de Marca Principal --- */
+  --color-primary: #FF6F43;         /* Coral / Naranja Pet Care cálido */
+  --color-primary-hover: #E85B2F;
+  --color-primary-light: #FFF1EB;   /* Fondo suave del acento */
+  --color-primary-dark: #C9471E;
+
+  /* --- 6 Estados de Reporte (Mapeo Unívoco) --- */
+  /* 1. Perdido (Urgente / Búsqueda activa) */
+  --status-perdido-color: #E0533C;
+  --status-perdido-bg: #FDECE8;
+  --status-perdido-border: #F8B4A6;
+
+  /* 2. Encontrado (Bajo resguardo temporal) */
+  --status-encontrado-color: #0284C7;
+  --status-encontrado-bg: #E0F2FE;
+  --status-encontrado-border: #BAE6FD;
+
+  /* 3. Coincidencia sugerida (En revisión) */
+  --status-coincidencia-color: #D97706;
+  --status-coincidencia-bg: #FEF3C7;
+  --status-coincidencia-border: #FDE68A;
+
+  /* 4. Confirmado por ambas partes (Validado) */
+  --status-confirmado-color: #4F46E5;
+  --status-confirmado-bg: #EEF2FF;
+  --status-confirmado-border: #C7D2FE;
+
+  /* 5. Reunido (Final feliz / Caso cerrado) */
+  --status-reunido-color: #059669;
+  --status-reunido-bg: #ECFDF5;
+  --status-reunido-border: #A7F3D0;
+
+  /* 6. En adopción (Buscando nuevo hogar) */
+  --status-adopcion-color: #7C3AED;
+  --status-adopcion-bg: #F5F3FF;
+  --status-adopcion-border: #DDD6FE;
+
+  /* 7. Adoptado (Nuevo hogar definitivo / Caso cerrado) */
+  --status-adoptado-color: #16A34A;
+  --status-adoptado-bg: #F0FDF4;
+  --status-adoptado-border: #BBF7D0;
+
+  /* --- Feedback del Sistema --- */
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-info: #0284C7;
+
+  /* --- Radios y Curvaturas (Estilo Suave Dribbble) --- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* --- Sombras Suaves (Light Elevation) --- */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.04);
+  --shadow-floating: 0 12px 36px rgba(255, 111, 67, 0.28);
+
+  /* --- Espaciado Táctil --- */
+  --space-2xs: 0.25rem; /* 4px */
+  --space-xs: 0.5rem;   /* 8px */
+  --space-sm: 0.75rem;  /* 12px */
+  --space-md: 1rem;     /* 16px */
+  --space-lg: 1.25rem;  /* 20px */
+  --space-xl: 1.5rem;   /* 24px */
+  --space-2xl: 2rem;    /* 32px */
+
+  /* --- Alturas y Z-Index --- */
+  --header-height: 72px;
+  --bottom-nav-height: 68px;
+  --max-content-width: 480px;
+  --z-header: 40;
+  --z-bottom-nav: 50;
+  --z-modal: 100;
+  --z-toast: 150;
+
+  /* --- Transiciones --- */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+/* ==========================================================================
+   Resets Base
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-app);
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

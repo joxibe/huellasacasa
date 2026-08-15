@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>¿Cómo funciona? — Huellas a Casa</title>
+  <meta name="description" content="Guía paso a paso sobre cómo funciona Huellas a Casa: publicaciones, seña secreta de verificación, coincidencias comunitarias y estados de casos." />
+
+  <link rel="icon" type="image/png" href="public/assets/img/favicon.png" />
+  <link rel="apple-touch-icon" href="public/assets/img/favicon.png" />
+
+  <!-- Theme System CSS Nativo (0 KB de fuentes externas, ultra-liviano para 3G) -->
+  <link rel="stylesheet" href="public/css/theme.css" />
+  <link rel="stylesheet" href="public/css/layout.css" />
+  <link rel="stylesheet" href="public/css/components.css" />
+  <link rel="stylesheet" href="public/css/forms.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Disclaimer Banner (Iniciativa ciudadana) -->
+    <div class="disclaimer-banner" role="note">
+      <span>
+        🐾 Huellas a Casa es una iniciativa ciudadana, no oficial. Para reportar personas desaparecidas usa
+        <a href="https://colombiatebusca.com" target="_blank" rel="noopener">Colombia Te Busca</a> o la Cruz Roja.
+      </span>
+    </div>
+
+    <!-- Header Superior -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand-section">
+          <a href="index.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
+            <div class="brand-logo">
+              <img src="public/assets/img/logo-icon.png" alt="Huellas a Casa" class="brand-logo-img" />
+            </div>
+            <div class="brand-title">
+              <span>Huellas a Casa</span>
+              <span class="brand-subtitle">Guía Comunitaria</span>
+            </div>
+          </a>
+        </div>
+
+        <nav class="desktop-nav-links" aria-label="Navegación de escritorio">
+          <a href="index.html" class="desktop-nav-link">Explorar</a>
+          <a href="como-funciona.html" class="desktop-nav-link active">¿Cómo funciona?</a>
+          <a href="privacidad.html" class="desktop-nav-link">Privacidad</a>
+          <a href="publicar.html" class="desktop-nav-link">+ Publicar Mascota</a>
+          <a href="mis-reportes.html" class="desktop-nav-link">Mis Reportes</a>
+        </nav>
+
+        <div class="header-right-actions">
+          <button id="user-header-btn" class="user-avatar-btn" aria-label="Cuenta de usuario">
+            <span class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 12px;">Ingresar</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="app-main">
+      <div class="form-container-card" style="line-height: 1.6;">
+        
+        <!-- Header de la Guía -->
+        <div style="margin-bottom: var(--space-lg); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-md);">
+          <a href="index.html" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 4px; margin-bottom: 12px; border-radius: var(--radius-full);">
+            ← Volver al explorador
+          </a>
+          <h1 style="font-size: var(--font-size-xl); font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.02em;">
+            ¿Cómo funciona Huellas a Casa?
+          </h1>
+          <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: 4px;">
+            Una guía pensada para que toda la comunidad participe con responsabilidad, solidaridad y máxima seguridad.
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-lg);">
+          
+          <!-- 1. Por qué se creó -->
+          <div style="background: linear-gradient(135deg, #FFF3EC 0%, #FEE2E2 100%); border: 1px solid var(--status-perdido-border); padding: var(--space-md); border-radius: var(--radius-lg);">
+            <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: var(--font-size-base); color: var(--color-primary-dark); margin-bottom: 6px;">
+              <span>❤️</span> 1. ¿Por qué nació esta plataforma?
+            </div>
+            <p style="font-size: var(--font-size-sm); color: #431407; margin-bottom: 6px;">
+              Tras el terremoto del 10 de agosto de 2026 en Colombia, cientos de perros, gatos y otras mascotas quedaron desorientados o separados de sus familias en varias ciudades.
+            </p>
+            <p style="font-size: var(--font-size-sm); color: #431407;">
+              <strong>Huellas a Casa</strong> es una iniciativa 100% ciudadana, gratuita y sin ánimo de lucro, diseñada con tecnología ultra-liviana para cargar de forma inmediata incluso en redes móviles 3G lentas y reunir a las mascotas con sus hogares.
+            </p>
+          </div>
+
+          <!-- 2. Cómo publicar paso a paso -->
+          <div style="background: var(--color-bg-card); border: 1px solid var(--color-border); padding: var(--space-md); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+            <h2 style="font-size: var(--font-size-base); font-weight: 800; color: var(--color-text-primary); margin-bottom: var(--space-sm); display: flex; align-items: center; gap: 6px;">
+              <span>📝</span> 2. ¿Cómo publicar una mascota?
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="background: var(--color-primary-light); color: var(--color-primary-dark); font-weight: 800; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); flex-shrink: 0;">1</span>
+                <div style="font-size: var(--font-size-sm);">
+                  <strong>Elige el tipo correcto:</strong> Marca <span style="color: var(--status-perdido-color); font-weight: 700;">🔴 Perdí mi Mascota</span> si eres el dueño buscando a tu compañero, <span style="color: var(--status-encontrado-color); font-weight: 700;">🔵 Encontré una Mascota</span> si la tienes en resguardo temporal o la viste en la calle, o <span style="color: var(--status-adopcion-color); font-weight: 700;">💜 Dar en Adopción</span> si buscas un hogar definitivo para un peludo rescatado.
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="background: var(--color-primary-light); color: var(--color-primary-dark); font-weight: 800; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); flex-shrink: 0;">2</span>
+                <div style="font-size: var(--font-size-sm);">
+                  <strong>Foto comprimida al instante:</strong> Sube una foto. Nuestro sistema la comprime en tu propio teléfono a menos de 300KB antes de subirla para no gastar tus datos móviles.
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="background: var(--color-primary-light); color: var(--color-primary-dark); font-weight: 800; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); flex-shrink: 0;">3</span>
+                <div style="font-size: var(--font-size-sm);">
+                  <strong>Ubicación aproximada:</strong> Selecciona tu ciudad o escribe tu municipio. <em>🔒 Por seguridad, nunca coloques dirección exacta ni número de casa.</em>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="background: var(--color-primary-light); color: var(--color-primary-dark); font-weight: 800; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); flex-shrink: 0;">4</span>
+                <div style="font-size: var(--font-size-sm);">
+                  <strong>Seña de verificación privada:</strong> Registra un detalle secreto que solo tú conozcas (ver siguiente sección).
+                </div>
+              </div>
+
+              <div style="background: var(--color-bg-muted); padding: 8px 12px; border-radius: var(--radius-md); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 4px;">
+                📊 <strong>Cupos responsables por cuenta:</strong> Cada usuario puede tener hasta <strong>3 reportes de mascotas perdidas</strong>, <strong>3 de mascotas encontradas</strong> y <strong>3 en adopción</strong> (tope total de <strong>9 reportes activos</strong> simultáneamente). Al cerrar un caso exitosamente (Reunido o Adoptado), el cupo de esa categoría se libera de inmediato en tiempo real.
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. La Seña Secreta -->
+          <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: var(--space-md); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-base); font-weight: 800; color: #92400E; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <span>🔒</span> 3. ¿Qué es la "Seña Privada" y cómo te protege?
+            </div>
+            <p style="font-size: var(--font-size-sm); color: #78350F; margin-bottom: 8px;">
+              Para evitar estafas, falsos reclamos o cobro indebido de recompensas, el formulario solicita una <strong>seña secreta</strong> (ejemplo: <em>"cicatriz en la pata trasera"</em>, <em>"lunar negro en el paladar"</em> o <em>"mancha oculta en el pecho"</em>).
+            </p>
+            <div style="background: #FFFFFF; padding: var(--space-sm); border-radius: var(--radius-md); border: 1px dashed #FDE68A; font-size: var(--font-size-xs); color: #92400E;">
+              <strong>🛡️ ¿Cómo se usa?:</strong><br/>
+              • Esta seña <strong>NUNCA aparece</strong> en la publicación pública ni en internet.<br/>
+              • Solo tú puedes consultarla con el botón <code>🔒 Ver mi seña secreta</code> en "Mis Reportes".<br/>
+              • Cuando alguien te escriba por WhatsApp afirmando que tiene a tu mascota, le pides que te describa esa seña antes de acordar la entrega presencial.
+            </div>
+          </div>
+
+          <!-- 4. Sistema de Coincidencias (Match) -->
+          <div style="background: var(--color-bg-card); border: 1px solid var(--color-border); padding: var(--space-md); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+            <h2 style="font-size: var(--font-size-base); font-weight: 800; color: var(--color-text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <span>🔗</span> 4. Sistema de Coincidencias (Match Bilateral por ID)
+            </h2>
+            <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-sm);">
+              Cualquier persona registrada (el dueño, quien rescató a la mascota o un voluntario solidario) puede vincular dos casos usando el botón <strong>"🔗 Sugerir coincidencia"</strong> y pegando el <strong>ID único</strong> de la otra publicación.
+            </p>
+            <div style="background: var(--color-bg-muted); padding: var(--space-sm); border-radius: var(--radius-md); font-size: var(--font-size-xs); color: var(--color-text-primary);">
+              <strong>Flujo Seguro de Confirmación:</strong>
+              <ul style="margin-left: 16px; margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+                <li><strong>Copia el ID:</strong> Cada tarjeta en el explorador y en la ficha técnica muestra su <code>🆔 rep_...</code>.</li>
+                <li><strong>Sugiere el Match:</strong> En el otro reporte, presiona <code>🔗 Sugerir coincidencia</code> y pega el ID.</li>
+                <li><strong>Validación Bilateral:</strong> A ambos autores les llega una <strong>tarjeta comparativa lado a lado</strong> en "Mis Reportes".</li>
+                <li>Si ambos aprueban, el estado cambia a <code>🎉 Confirmado por ambas partes</code>.</li>
+                <li>Una vez entregada la mascota a su familia, se pulsa <code>🐾 Marcar como Reunido</code> para cerrar ambos casos y liberar cupos.</li>
+                <li>Si no coincide, cualquiera presiona <code>✕ No coincide</code> y ambos reportes vuelven a su estado habitual.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 5. Significado de los 7 Colores y Estados -->
+          <div style="background: var(--color-bg-card); border: 1px solid var(--color-border); padding: var(--space-md); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+            <h2 style="font-size: var(--font-size-base); font-weight: 800; color: var(--color-text-primary); margin-bottom: var(--space-sm); display: flex; align-items: center; gap: 6px;">
+              <span>🎨</span> 5. Guía de Estados y Colores
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status" data-status="perdido">🔴 Perdido</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">Mascota que está siendo buscada activamente por su familia.</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status" data-status="encontrado">🔵 Encontrado</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">Mascota encontrada o en resguardo temporal en busca de su dueño.</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status" data-status="coincidencia_sugerida">⚠️ Coincidencia sugerida</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">Se propuso una unión entre dos reportes; pendiente de validación mutua.</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status" data-status="confirmado_ambas_partes">🎉 Confirmado por ambas partes</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">Ambas partes validaron que es la misma mascota; en proceso de entrega.</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status" data-status="reunido">🐾 Reunido</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">¡Final feliz! Mascota devuelta a casa con su dueño original (Caso cerrado).</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status" data-status="en_adopcion">💜 En adopción</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">Mascota publicada para adopción o rescatada sin reclamo tras 20+ días de custodia responsable.</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status" data-status="adoptado">💚 Adoptado</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">¡Final feliz! Mascota entregada con éxito a su familia adoptante definitiva (Caso cerrado, libera cupo).</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Responsabilidad Ciudadana -->
+          <div style="background: var(--color-bg-muted); border: 1px solid var(--color-border); padding: var(--space-md); border-radius: var(--radius-lg);">
+            <h2 style="font-size: var(--font-size-base); font-weight: 800; color: var(--color-text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <span>🤝</span> 6. Compromiso de Uso Responsable
+            </h2>
+            <ul style="margin-left: 20px; font-size: var(--font-size-xs); color: var(--color-text-secondary); display: flex; flex-direction: column; gap: 6px;">
+              <li><strong>Veracidad:</strong> Publica solo información real y fotos auténticas.</li>
+              <li><strong>Cierra a tiempo:</strong> Si tu mascota ya apareció o fue adoptada, márcala como <em>Reunido</em> o <em>Adoptado</em> para liberar tu cupo y no saturar las búsquedas de quienes siguen necesitando ayuda.</li>
+              <li><strong>Seguridad en entregas:</strong> Acuerda siempre encuentros en lugares públicos iluminados (estaciones de transporte, parques concurridos, clínicas veterinarias).</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin-top: var(--space-xs);">
+            <a href="publicar.html" class="btn btn-primary" style="max-width: 260px; display: inline-block; padding: 12px 24px; font-weight: 700;">
+              🐾 Publicar Mascota Ahora
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer con Crédito -->
+      <footer class="app-footer">
+        <div>
+          <a href="index.html">Explorar</a> &bull; 
+          <a href="como-funciona.html">¿Cómo funciona?</a> &bull; 
+          <a href="privacidad.html">Aviso de Privacidad</a> &bull; 
+          Emergencia Colombia 2026
+        </div>
+        <div class="app-footer-credit">
+          🐾 Hecho con ❤️ por <span>DevIaWorks</span>
+        </div>
+      </footer>
+    </main>
+
+    <!-- Bottom Navigation (Móvil / Dock) -->
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Explorar</span>
+      </a>
+
+      <a href="como-funciona.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Guía</span>
+      </a>
+
+      <a href="publicar.html" class="nav-item nav-item-fab" aria-label="Publicar reporte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </a>
+
+      <a href="mis-reportes.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Reportes</span>
+      </a>
+
+      <a href="privacidad.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <span>Privacidad</span>
+      </a>
+    </nav>
+  </div>
+
+  <script type="module" src="./public/js/app.js"></script>
+</body>
+</html>
