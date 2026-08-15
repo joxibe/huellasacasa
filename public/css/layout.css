@@ -245,10 +245,11 @@
   box-shadow: 0 2px 8px rgba(255, 111, 67, 0.25);
 }
 
+.nav-item-fab.active svg,
 .nav-item-fab svg {
   width: 24px;
   height: 24px;
-  stroke: #FFFFFF;
+  stroke: #FFFFFF !important;
   stroke-width: 2.5;
 }
 

@@ -83,7 +83,8 @@ async function runFirestoreRulesTests() {
 
       await db.collection('reportes').doc(reporteId).collection('privado').doc('contacto').set({
         telefonoContacto: '3161234567',
-        medioContacto: 'whatsapp'
+        medioContacto: 'whatsapp',
+        creadorUid: creatorUid
       });
 
       await db.collection('reportes').doc(reporteId).collection('privado').doc('seguridad').set({
@@ -271,6 +272,77 @@ async function runFirestoreRulesTests() {
       record(14, '[ALLOWED] Creador puede cerrar a reunido tras desvincularse limpiando coincidenciaConReporteId', true);
     } catch (e) {
       record(14, '[ALLOWED] Creador puede cerrar a reunido tras desvincularse limpiando coincidenciaConReporteId', false, e.message);
+    }
+
+    // ── CASO 15: [ALLOWED] Creación atómica en una sola transacción/batch de /reportes/{id}, /privado/contacto y /privado/seguridad ──
+    const newUserId = 'usr_nuevo_batch_01';
+    const newReportId = 'rep_nuevo_batch_01';
+    const newUserDb = testEnv.authenticatedContext(newUserId).firestore();
+
+    // Inicializar usuario con cuota disponible (0 activos)
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('usuarios').doc(newUserId).set({
+        uid: newUserId,
+        perdidosActivosCount: 0,
+        encontradosActivosCount: 0,
+        adopcionActivosCount: 0,
+        reportesActivosCount: 0
+      });
+    });
+
+    try {
+      const batch = newUserDb.batch();
+      // 1. Incremento de cuota en usuario
+      batch.update(newUserDb.collection('usuarios').doc(newUserId), {
+        reportesActivosCount: 1,
+        perdidosActivosCount: 1
+      });
+      // 2. Documento principal público
+      batch.set(newUserDb.collection('reportes').doc(newReportId), {
+        id: newReportId,
+        creadorUid: newUserId,
+        tipo: 'perdido',
+        estado: 'perdido',
+        nombre: 'Kira',
+        ciudad: 'Cali',
+        ciudadLower: 'cali',
+        fechaCreacion: new Date().toISOString(),
+        fechaActualizacion: new Date().toISOString(),
+        confirmadoPorCreador: false,
+        confirmadoPorContraparte: false,
+        coincidenciaConReporteId: null
+      });
+      // 3. Subcolección contacto
+      batch.set(newUserDb.collection('reportes').doc(newReportId).collection('privado').doc('contacto'), {
+        telefonoContacto: '3187654321',
+        medioContacto: 'whatsapp',
+        creadorUid: newUserId,
+        creadoEn: new Date().toISOString()
+      });
+      // 4. Subcolección seguridad
+      batch.set(newUserDb.collection('reportes').doc(newReportId).collection('privado').doc('seguridad'), {
+        senaVerificacionPrivada: 'Mancha en oreja derecha',
+        creadorUid: newUserId,
+        creadoEn: new Date().toISOString()
+      });
+
+      await assertSucceeds(batch.commit());
+      record(15, '[ALLOWED] Creación atómica en batch de /reportes/{id}, /privado/contacto y /privado/seguridad', true);
+    } catch (e) {
+      record(15, '[ALLOWED] Creación atómica en batch de /reportes/{id}, /privado/contacto y /privado/seguridad', false, e.message);
+    }
+
+    // ── CASO 16: [BLOCKED] Usuario NO puede crear /privado/contacto con creadorUid ajeno ──
+    try {
+      const spoofReportId = 'rep_spoof_01';
+      await assertFails(strangerDb.collection('reportes').doc(spoofReportId).collection('privado').doc('contacto').set({
+        telefonoContacto: '3110000000',
+        medioContacto: 'whatsapp',
+        creadorUid: creatorUid // Intento de suplantar al creador
+      }));
+      record(16, '[BLOCKED] Usuario bloqueado de crear /privado/contacto con creadorUid ajeno', true);
+    } catch (e) {
+      record(16, '[BLOCKED] Usuario bloqueado de crear /privado/contacto con creadorUid ajeno', false, e.message);
     }
 
     console.log('\n════════════════════════════════════════════════════════════');

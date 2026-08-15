@@ -123,8 +123,22 @@ export function inicializarFormulario() {
   // Control de selector de ciudad y campo de otra ciudad
   const selectCiudad = document.getElementById('select-ciudad');
   const inputCiudadOtra = document.getElementById('input-ciudad-otra');
+  const headerSubtitle = document.getElementById('header-ciudad-subtitle');
+
+  function actualizarSubtituloCiudad() {
+    if (!headerSubtitle) return;
+    const val = selectCiudad ? selectCiudad.value : 'Cali';
+    if (val === '__otra__') {
+      const otraVal = inputCiudadOtra ? inputCiudadOtra.value.trim() : '';
+      headerSubtitle.textContent = otraVal ? `${otraVal}, Colombia` : 'Colombia';
+    } else {
+      headerSubtitle.textContent = val ? `${val}, Colombia` : 'Colombia';
+    }
+  }
+
   if (selectCiudad && inputCiudadOtra) {
     selectCiudad.addEventListener('change', (e) => {
+      actualizarSubtituloCiudad();
       if (e.target.value === '__otra__') {
         inputCiudadOtra.style.display = 'block';
         inputCiudadOtra.required = true;
@@ -135,6 +149,9 @@ export function inicializarFormulario() {
         inputCiudadOtra.value = '';
       }
     });
+
+    inputCiudadOtra.addEventListener('input', actualizarSubtituloCiudad);
+    actualizarSubtituloCiudad();
   }
 
   // Envío del Formulario

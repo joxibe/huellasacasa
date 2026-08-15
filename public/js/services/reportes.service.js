@@ -255,6 +255,7 @@ export async function crearReporte(datos, imageBlob) {
       transaction.set(contactoRef, {
         telefonoContacto: datos.telefonoContacto,
         medioContacto: datos.medioContacto || 'whatsapp',
+        creadorUid: user.uid,
         creadoEn: new Date().toISOString()
       });
 

@@ -154,14 +154,15 @@ service cloud.firestore {
       // 3a. Datos de contacto: Cualquier usuario autenticado puede leer para contactar al publicador
       match /privado/contacto {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated() 
-                     && request.auth.uid == get(/databases/$(database)/documents/reportes/$(reporteId)).data.creadorUid;
+        allow create: if isAuthenticated() && request.resource.data.creadorUid == request.auth.uid;
+        allow update, delete: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
       }
 
       // 3b. Seña secreta de seguridad: ÚNICAMENTE accesible por el creador original del reporte
       match /privado/seguridad {
-        allow read, write: if isAuthenticated() 
-                     && request.auth.uid == get(/databases/$(database)/documents/reportes/$(reporteId)).data.creadorUid;
+        allow read: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
+        allow create: if isAuthenticated() && request.resource.data.creadorUid == request.auth.uid;
+        allow update, delete: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
       }
     }
 

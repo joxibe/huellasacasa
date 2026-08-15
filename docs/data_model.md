@@ -56,6 +56,7 @@ Aislada del documento público. **Solo usuarios autenticados (`request.auth != n
 {
   "telefonoContacto": "+573001234567",
   "medioContacto": "whatsapp",     // "whatsapp" | "llamada" | "ambos"
+  "creadorUid": "usr_google_xyz987",
   "creadoEn": "2026-08-13T18:00:00.000Z"
 }
 ```
