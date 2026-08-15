@@ -200,7 +200,6 @@ export async function crearReporte(datos, imageBlob) {
     necesitaVet: datos.tipo === 'encontrado' ? Boolean(datos.necesitaVet) : false,
     situacionLugar: datos.tipo === 'encontrado' ? (datos.situacionLugar || 'en_casa_temporal') : null,
     creadorUid: user.uid,
-    reportesAbusoCount: 0,
     coincidenciaConReporteId: null,
     confirmadoPorCreador: false,
     confirmadoPorContraparte: false,
@@ -785,10 +784,11 @@ export async function reportarAbuso(reporteId, motivo, comentario = '') {
 
   const db = asegurarFirestore();
   if (db) {
-    await db.collection('reportes_abuso').add(nuevoAbuso);
-    await db.collection('reportes').doc(reporteId).update({
-      reportesAbusoCount: window.firebase.firestore.FieldValue.increment(1)
-    });
+    const docId = `${reporteId}_${user.uid}`;
+    const docRef = db.collection('reportes_abuso').doc(docId);
+    
+    // Guardar denuncia aislada en /reportes_abuso (sin alterar ni exponer conteos en el documento público)
+    await docRef.set(nuevoAbuso);
     return { success: true };
   }
 

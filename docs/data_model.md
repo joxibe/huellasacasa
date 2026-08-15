@@ -37,7 +37,6 @@ Documento público accesible para búsqueda y visualización. **Nunca incluye di
 
   // Metadatos de auditoría y autor (Sin correo expuesto)
   "creadorUid": "usr_google_xyz987",
-  "reportesAbusoCount": 0,
   "coincidenciaConReporteId": null,// ID del reporte con el que se sugiere coincidencia
   "confirmadoPorCreador": false,
   "confirmadoPorContraparte": false,
@@ -98,16 +97,18 @@ Control del perfil y de la cuota diferenciada de reportes activos por cuenta (M�
 
 ---
 
-## ⚠️ Colección: `reportes_abuso` (`/reportes_abuso/{reporteAbusoId}`)
+## ⚠️ Colección Protegida: `reportes_abuso` (`/reportes_abuso/{reporteId}_{usuarioUid}`)
 
-Registro de alertas comunitarias para moderación.
+Registro de alertas comunitarias para moderación. Protegido en `firestore.rules` con `allow read: if false;` (solo accesible por el administrador en Firebase Console).
+El ID del documento es determinista (`${reporteId}_${usuarioUid}`) para evitar que una misma cuenta infle artificialmente las denuncias sobre un mismo caso.
 
 ```json
 {
   "reporteId": "rep_abc123",
   "usuarioDenuncianteUid": "usr_google_denunciante",
+  "usuarioDenuncianteEmail": "denunciante@gmail.com",
   "motivo": "spam_o_fraude",        // "spam_o_fraude" | "foto_inapropiada" | "datos_falsos" | "otro"
   "comentario": "Este anuncio parece duplicado",
-  "fecha": "2026-08-13T19:00:00.000Z"
+  "fechaCreacion": "2026-08-13T19:00:00.000Z"
 }
 ```
