@@ -525,6 +525,50 @@ assert(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
+// BLOQUE 15: Eliminación de Reportes y Liberación de Recursos
+// ═══════════════════════════════════════════════════════════════════════════
+suite('BLOQUE 15 — Eliminación de Reportes (eliminarReporte)');
+
+const { eliminarReporte } = await import('../public/js/services/reportes.service.js');
+
+resetStore();
+const userOwner = { uid: 'usr_owner_del', email: 'owner@test.com', displayName: 'Owner' };
+setTestUser(userOwner);
+
+const repEliminar = await crearReporte(datosBase('perdido', { nombre: 'Para Borrar' }));
+assert(repEliminar.id !== undefined, 'eliminarReporte — Reporte creado exitosamente');
+
+// Intento de borrado por un usuario extraño -> DEBE FALLAR
+setTestUser({ uid: 'usr_extrano', email: 'extrano@test.com', displayName: 'Extraño' });
+await assertThrows(
+  () => eliminarReporte(repEliminar.id),
+  'Solo el autor puede eliminar este reporte',
+  'eliminarReporte — Rechaza intento de eliminación por un usuario ajeno'
+);
+
+// Borrado legítimo por el autor
+setTestUser(userOwner);
+const resEliminar = await eliminarReporte(repEliminar.id);
+assert(resEliminar.success === true, 'eliminarReporte — Autor elimina su propio reporte con éxito');
+
+const repPostDelete = await obtenerReportePorId(repEliminar.id);
+assert(repPostDelete === null, 'eliminarReporte — El reporte ya no existe en la base de datos');
+
+// Desvinculación automática al eliminar con coincidencia activa
+const repA_match = await crearReporte(datosBase('perdido', { nombre: 'Perdido Match' }));
+const userB_match = { uid: 'usr_b_match', email: 'b@test.com', displayName: 'User B' };
+setTestUser(userB_match);
+const repB_match = await crearReporte(datosBase('encontrado', { nombre: 'Encontrado Match' }));
+
+await sugerirCoincidencia(repA_match.id, repB_match.id);
+assert(repB_match.coincidenciaConReporteId === repA_match.id, 'eliminarReporte — Coincidencia establecida previamente');
+
+// User B elimina su reporte -> Rep A debe quedar desvinculado y en estado 'perdido'
+await eliminarReporte(repB_match.id);
+assert(repA_match.coincidenciaConReporteId === null, 'eliminarReporte — Contraparte queda desvinculada');
+assert(repA_match.estado === 'perdido', 'eliminarReporte — Contraparte regresa a su estado base');
+
+// ═══════════════════════════════════════════════════════════════════════════
 // RESUMEN
 // ═══════════════════════════════════════════════════════════════════════════
 console.log('\n' + '═'.repeat(60));

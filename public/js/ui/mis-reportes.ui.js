@@ -1,132 +1,169 @@
-import { obtenerMisReportes, obtenerReportePorId, cambiarAEnAdopcion, responderCoincidencia, marcarComoReunido, marcarComoAdoptado, obtenerSenaPrivada, obtenerCuotasUsuario } from '../services/reportes.service.js';
-import { getCurrentUser, loginWithGoogle } from '../services/auth.service.js';
+/**
+ * HUELLAS A CASA — Controlador UI de Mis Reportes
+ * Gestiona el panel de reportes propios, validación asíncrona de sesión,
+ * visualización de cupos, señas privadas, confirmación bilateral y eliminación.
+ */
+
+import { 
+  obtenerMisReportes, 
+  obtenerReportePorId, 
+  cambiarAEnAdopcion, 
+  responderCoincidencia, 
+  marcarComoReunido, 
+  marcarComoAdoptado, 
+  eliminarReporte,
+  obtenerSenaPrivada, 
+  obtenerCuotasUsuario 
+} from '../services/reportes.service.js';
+import { onAuthStateChanged, loginWithGoogle } from '../services/auth.service.js';
 import { formatoTiempoRelativo, formatearEstado, formatearEspecie } from '../utils/formato.js';
 
-export async function inicializarMisReportes() {
+let authListenerUnsubscribe = null;
+
+export function inicializarMisReportes() {
   const container = document.getElementById('mis-reportes-container');
-  const user = getCurrentUser();
+  if (!container) return;
 
-  // Caso: Usuario sin sesión -> Mostrar tarjeta clara de login (nunca pantalla vacía)
-  if (!user) {
-    container.innerHTML = `
-      <div class="ui-state-empty" style="border: none; background: var(--color-bg-card); box-shadow: var(--shadow-sm);">
-        <div style="font-size: 3rem; margin-bottom: 8px;">🔐 🐾</div>
-        <h2 class="ui-state-title">Inicia sesión para ver tus reportes</h2>
-        <p class="ui-state-desc">
-          Para gestionar tus mascotas publicadas, confirmar coincidencias o consultar tus señas de verificación secretas, accede con tu cuenta de Google.
-        </p>
-        <button id="btn-login-mis-reportes" class="btn btn-primary" style="margin-top: 12px; max-width: 260px;">
-          Continuar con Google
-        </button>
-      </div>
-    `;
-
-    document.getElementById('btn-login-mis-reportes').addEventListener('click', async () => {
-      try {
-        await loginWithGoogle();
-        inicializarMisReportes();
-      } catch (e) {
-        alert('Error al iniciar sesión: ' + e.message);
-      }
-    });
-    return;
-  }
-
-  // Usuario autenticado -> Cargar cuotas y sus reportes
+  // Estado inicial de carga mientras Firebase Auth valida IndexedDB / token
   container.innerHTML = `
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
-      <div>
-        <h1 style="font-size: var(--font-size-lg); font-weight: 700;">Mis Reportes</h1>
-        <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">${user.displayName || 'Usuario'} (${user.email})</p>
-      </div>
-      <a href="publicar.html" class="btn btn-primary btn-sm">+ Publicar</a>
-    </div>
-    <div id="box-cuotas-usuario"></div>
-    <div id="lista-mis-reportes">
-      <div class="skeleton-card">
-        <div class="skeleton-box skeleton-title"></div>
-        <div class="skeleton-box skeleton-text"></div>
-      </div>
+    <div style="padding: var(--space-lg) var(--space-md); text-align: center;">
+      <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+      <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary);">Verificando sesión...</h3>
+      <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 4px;">Cargando tus datos y reportes activos...</p>
     </div>
   `;
 
-  try {
-    const [reportes, cuotas] = await Promise.all([
-      obtenerMisReportes(user.uid),
-      obtenerCuotasUsuario(user.uid)
-    ]);
+  // Limpiar listener anterior si existe
+  if (authListenerUnsubscribe) {
+    authListenerUnsubscribe();
+  }
 
-    // Renderizar bloque visual de cuotas diferenciadas
-    const boxCuotas = document.getElementById('box-cuotas-usuario');
-    if (boxCuotas) {
-      boxCuotas.innerHTML = `
-        <div style="background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-md); margin-bottom: var(--space-md); box-shadow: var(--shadow-sm);">
-          <div style="font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span>📊</span> Mis cupos de publicación activos
-            </div>
-            <span style="font-size: 11px; font-weight: 600; color: var(--color-text-secondary); background: var(--color-bg-muted); padding: 2px 8px; border-radius: var(--radius-sm);">
-              Total: ${cuotas.totalActivos} / ${cuotas.limiteTotal}
-            </span>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-            <div style="background: var(--color-bg-muted); padding: 8px 10px; border-radius: var(--radius-md);">
-              <div style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600;">🔴 Perdidas</div>
-              <div style="font-size: var(--font-size-base); font-weight: 800; color: ${cuotas.perdidosActivos >= cuotas.limitePerdidos ? 'var(--status-perdido-color)' : 'var(--color-text-primary)'};">
-                ${cuotas.perdidosActivos} / ${cuotas.limitePerdidos}
-              </div>
-              <div style="font-size: 10px; color: var(--color-text-muted);">${cuotas.limitePerdidos - cuotas.perdidosActivos > 0 ? `${cuotas.limitePerdidos - cuotas.perdidosActivos} libre(s)` : 'Completo'}</div>
-            </div>
-            <div style="background: var(--color-bg-muted); padding: 8px 10px; border-radius: var(--radius-md);">
-              <div style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600;">🔵 Encontradas</div>
-              <div style="font-size: var(--font-size-base); font-weight: 800; color: ${cuotas.encontradosActivos >= cuotas.limiteEncontrados ? 'var(--status-encontrado-color)' : 'var(--color-text-primary)'};">
-                ${cuotas.encontradosActivos} / ${cuotas.limiteEncontrados}
-              </div>
-              <div style="font-size: 10px; color: var(--color-text-muted);">${cuotas.limiteEncontrados - cuotas.encontradosActivos > 0 ? `${cuotas.limiteEncontrados - cuotas.encontradosActivos} libre(s)` : 'Completo'}</div>
-            </div>
-            <div style="background: var(--color-bg-muted); padding: 8px 10px; border-radius: var(--radius-md);">
-              <div style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600;">💜 En Adopción</div>
-              <div style="font-size: var(--font-size-base); font-weight: 800; color: ${cuotas.adopcionActivos >= cuotas.limiteAdopcion ? 'var(--status-adopcion-color)' : 'var(--color-text-primary)'};">
-                ${cuotas.adopcionActivos} / ${cuotas.limiteAdopcion}
-              </div>
-              <div style="font-size: 10px; color: var(--color-text-muted);">${cuotas.limiteAdopcion - cuotas.adopcionActivos > 0 ? `${cuotas.limiteAdopcion - cuotas.adopcionActivos} libre(s)` : 'Completo'}</div>
-            </div>
-          </div>
-          <div style="font-size: 11px; color: var(--color-text-secondary); line-height: 1.4; background: #FFFBEB; border: 1px solid #FDE68A; padding: 6px 10px; border-radius: var(--radius-sm);">
-            ℹ️ <strong>¿Por qué hay límites?</strong> Máximo 3 por categoría (hasta 9 en total). Al cerrar un caso exitosamente (Reunido o Adoptado), el cupo se libera de forma automática.
-          </div>
+  // Esperar a que onAuthStateChanged resuelva de forma asíncrona y reactiva
+  authListenerUnsubscribe = onAuthStateChanged(async (user) => {
+    if (!user) {
+      container.innerHTML = `
+        <div class="ui-state-empty" style="border: none; background: var(--color-bg-card); box-shadow: var(--shadow-sm);">
+          <div style="font-size: 3rem; margin-bottom: 8px;">🔐 🐾</div>
+          <h2 class="ui-state-title">Inicia sesión para ver tus reportes</h2>
+          <p class="ui-state-desc">
+            Para gestionar tus mascotas publicadas, confirmar coincidencias, consultar señas secretas o eliminar reportes, accede con tu cuenta de Google.
+          </p>
+          <button id="btn-login-mis-reportes" class="btn btn-primary" style="margin-top: 12px; max-width: 260px;">
+            Continuar con Google
+          </button>
         </div>
       `;
-    }
 
-    const listaContainer = document.getElementById('lista-mis-reportes');
-
-    if (!reportes || reportes.length === 0) {
-      listaContainer.innerHTML = `
-        <div class="ui-state-empty">
-          <div class="ui-state-icon">📋</div>
-          <h3 class="ui-state-title">Aún no has creado reportes</h3>
-          <p class="ui-state-desc">Cuando publiques una mascota perdida o encontrada, aparecerá aquí para que puedas gestionarla y validar coincidencias.</p>
-          <a href="publicar.html" class="btn btn-primary btn-sm" style="margin-top: 8px;">Publicar mi primer reporte</a>
-        </div>
-      `;
+      const btnLogin = document.getElementById('btn-login-mis-reportes');
+      if (btnLogin) {
+        btnLogin.addEventListener('click', async () => {
+          try {
+            await loginWithGoogle();
+          } catch (e) {
+            alert('Error al iniciar sesión: ' + e.message);
+          }
+        });
+      }
       return;
     }
 
-    // Renderizar cada reporte con su información de coincidencia si existe
-    const htmlCards = await Promise.all(reportes.map(r => renderMiReporteItemAsync(r, user.uid)));
-    listaContainer.innerHTML = htmlCards.join('');
-    vincularAccionesMisReportes(reportes);
-
-  } catch (err) {
-    console.error('Error cargando mis reportes:', err);
+    // Usuario autenticado -> Cargar cuotas y sus reportes
     container.innerHTML = `
-      <div class="ui-state-error">
-        <h3 class="ui-state-title">Error al cargar tus reportes</h3>
-        <button onclick="location.reload()" class="btn btn-primary btn-sm">Reintentar</button>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
+        <div>
+          <h1 style="font-size: var(--font-size-lg); font-weight: 700;">Mis Reportes</h1>
+          <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">${user.displayName || 'Usuario'} (${user.email})</p>
+        </div>
+        <a href="publicar.html" class="btn btn-primary btn-sm">+ Publicar</a>
+      </div>
+      <div id="box-cuotas-usuario"></div>
+      <div id="lista-mis-reportes">
+        <div class="skeleton-card">
+          <div class="skeleton-box skeleton-title"></div>
+          <div class="skeleton-box skeleton-text"></div>
+        </div>
       </div>
     `;
-  }
+
+    try {
+      const [reportes, cuotas] = await Promise.all([
+        obtenerMisReportes(user.uid),
+        obtenerCuotasUsuario(user.uid)
+      ]);
+
+      // Renderizar bloque visual de cuotas diferenciadas
+      const boxCuotas = document.getElementById('box-cuotas-usuario');
+      if (boxCuotas) {
+        boxCuotas.innerHTML = `
+          <div style="background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-md); margin-bottom: var(--space-md); box-shadow: var(--shadow-sm);">
+            <div style="font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span>📊</span> Mis cupos de publicación activos
+              </div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--color-text-secondary); background: var(--color-bg-muted); padding: 2px 8px; border-radius: var(--radius-sm);">
+                Total: ${cuotas.totalActivos} / ${cuotas.limiteTotal}
+              </span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div style="background: var(--color-bg-muted); padding: 8px 10px; border-radius: var(--radius-md);">
+                <div style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600;">🔴 Perdidas</div>
+                <div style="font-size: var(--font-size-base); font-weight: 800; color: ${cuotas.perdidosActivos >= cuotas.limitePerdidos ? 'var(--status-perdido-color)' : 'var(--color-text-primary)'};">
+                  ${cuotas.perdidosActivos} / ${cuotas.limitePerdidos}
+                </div>
+                <div style="font-size: 10px; color: var(--color-text-muted);">${cuotas.limitePerdidos - cuotas.perdidosActivos > 0 ? `${cuotas.limitePerdidos - cuotas.perdidosActivos} libre(s)` : 'Completo'}</div>
+              </div>
+              <div style="background: var(--color-bg-muted); padding: 8px 10px; border-radius: var(--radius-md);">
+                <div style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600;">🔵 Encontradas</div>
+                <div style="font-size: var(--font-size-base); font-weight: 800; color: ${cuotas.encontradosActivos >= cuotas.limiteEncontrados ? 'var(--status-encontrado-color)' : 'var(--color-text-primary)'};">
+                  ${cuotas.encontradosActivos} / ${cuotas.limiteEncontrados}
+                </div>
+                <div style="font-size: 10px; color: var(--color-text-muted);">${cuotas.limiteEncontrados - cuotas.encontradosActivos > 0 ? `${cuotas.limiteEncontrados - cuotas.encontradosActivos} libre(s)` : 'Completo'}</div>
+              </div>
+              <div style="background: var(--color-bg-muted); padding: 8px 10px; border-radius: var(--radius-md);">
+                <div style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600;">💜 En Adopción</div>
+                <div style="font-size: var(--font-size-base); font-weight: 800; color: ${cuotas.adopcionActivos >= cuotas.limiteAdopcion ? 'var(--status-adopcion-color)' : 'var(--color-text-primary)'};">
+                  ${cuotas.adopcionActivos} / ${cuotas.limiteAdopcion}
+                </div>
+                <div style="font-size: 10px; color: var(--color-text-muted);">${cuotas.limiteAdopcion - cuotas.adopcionActivos > 0 ? `${cuotas.limiteAdopcion - cuotas.adopcionActivos} libre(s)` : 'Completo'}</div>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: var(--color-text-secondary); line-height: 1.4; background: #FFFBEB; border: 1px solid #FDE68A; padding: 6px 10px; border-radius: var(--radius-sm);">
+              ℹ️ <strong>¿Por qué hay límites?</strong> Máximo 3 por categoría (hasta 9 en total). Al cerrar o eliminar un caso, el cupo se libera de forma automática.
+            </div>
+          </div>
+        `;
+      }
+
+      const listaContainer = document.getElementById('lista-mis-reportes');
+
+      if (!reportes || reportes.length === 0) {
+        listaContainer.innerHTML = `
+          <div class="ui-state-empty">
+            <div class="ui-state-icon">📋</div>
+            <h3 class="ui-state-title">Aún no has creado reportes</h3>
+            <p class="ui-state-desc">Cuando publiques una mascota perdida o encontrada, aparecerá aquí para que puedas gestionarla y validar coincidencias.</p>
+            <a href="publicar.html" class="btn btn-primary btn-sm" style="margin-top: 8px;">Publicar mi primer reporte</a>
+          </div>
+        `;
+        return;
+      }
+
+      // Renderizar cada reporte con su información de coincidencia si existe
+      const htmlCards = await Promise.all(reportes.map(r => renderMiReporteItemAsync(r, user.uid)));
+      listaContainer.innerHTML = htmlCards.join('');
+      vincularAccionesMisReportes();
+
+    } catch (err) {
+      console.error('Error cargando mis reportes:', err);
+      container.innerHTML = `
+        <div class="ui-state-error">
+          <h3 class="ui-state-title">Error al cargar tus reportes</h3>
+          <p class="ui-state-desc">${err.message}</p>
+          <button onclick="location.reload()" class="btn btn-primary btn-sm" style="margin-top: 8px;">Reintentar</button>
+        </div>
+      `;
+    }
+  });
 }
 
 async function renderMiReporteItemAsync(reporte, userUid) {
@@ -219,7 +256,7 @@ async function renderMiReporteItemAsync(reporte, userUid) {
         <span id="texto-sena-${reporte.id}">Cargando...</span>
       </div>
 
-      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--space-sm); border-top: 1px solid var(--color-border); padding-top: var(--space-xs);">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--space-sm); border-top: 1px solid var(--color-border); padding-top: var(--space-xs); align-items: center;">
         <a href="detalle.html?id=${reporte.id}" class="btn btn-secondary btn-sm">Ver publicación</a>
         
         <button class="btn btn-secondary btn-sm btn-ver-sena" data-id="${reporte.id}">
@@ -243,12 +280,17 @@ async function renderMiReporteItemAsync(reporte, userUid) {
             💚 Marcar como Adoptado
           </button>
         ` : ''}
+
+        <!-- Botón Eliminar Reporte -->
+        <button class="btn btn-secondary btn-sm btn-eliminar-reporte" data-id="${reporte.id}" style="color: #DC2626; border-color: #FCA5A5; margin-left: auto;">
+          🗑️ Eliminar reporte
+        </button>
       </div>
     </div>
   `;
 }
 
-function vincularAccionesMisReportes(reportes) {
+function vincularAccionesMisReportes() {
   // Ver seña secreta privada
   document.querySelectorAll('.btn-ver-sena').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -345,6 +387,26 @@ function vincularAccionesMisReportes(reportes) {
           inicializarMisReportes();
         } catch (e) {
           alert('Error: ' + e.message);
+        }
+      }
+    });
+  });
+
+  // Eliminar Reporte
+  document.querySelectorAll('.btn-eliminar-reporte').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (confirm('¿Seguro que quieres eliminar este reporte? Esta acción no se puede deshacer.')) {
+        try {
+          btn.disabled = true;
+          btn.textContent = 'Eliminando...';
+          await eliminarReporte(id);
+          alert('El reporte ha sido eliminado correctamente y tu cupo ha sido liberado.');
+          inicializarMisReportes();
+        } catch (e) {
+          alert('Error al eliminar el reporte: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = '🗑️ Eliminar reporte';
         }
       }
     });

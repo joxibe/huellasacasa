@@ -345,6 +345,26 @@ async function runFirestoreRulesTests() {
       record(16, '[BLOCKED] Usuario bloqueado de crear /privado/contacto con creadorUid ajeno', false, e.message);
     }
 
+    // ── CASO 17: [BLOCKED] Usuario extraño no puede borrar /reportes/{id} ni sus subcolecciones ──
+    try {
+      await assertFails(strangerDb.collection('reportes').doc(reporteId).delete());
+      await assertFails(strangerDb.collection('reportes').doc(reporteId).collection('privado').doc('contacto').delete());
+      await assertFails(strangerDb.collection('reportes').doc(reporteId).collection('privado').doc('seguridad').delete());
+      record(17, '[BLOCKED] Usuario extraño bloqueado de borrar reporte o sus subcolecciones ajenas', true);
+    } catch (e) {
+      record(17, '[BLOCKED] Usuario extraño bloqueado de borrar reporte o sus subcolecciones ajenas', false, e.message);
+    }
+
+    // ── CASO 18: [ALLOWED] Creador legítimo SÍ puede borrar su propio reporte y subcolecciones ──
+    try {
+      await assertSucceeds(creatorDb.collection('reportes').doc(reporteId).collection('privado').doc('contacto').delete());
+      await assertSucceeds(creatorDb.collection('reportes').doc(reporteId).collection('privado').doc('seguridad').delete());
+      await assertSucceeds(creatorDb.collection('reportes').doc(reporteId).delete());
+      record(18, '[ALLOWED] Creador legítimo puede borrar su reporte y sus subcolecciones privadas', true);
+    } catch (e) {
+      record(18, '[ALLOWED] Creador legítimo puede borrar su reporte y sus subcolecciones privadas', false, e.message);
+    }
+
     console.log('\n════════════════════════════════════════════════════════════');
     const passedCount = results.filter(r => r.passed).length;
     const failedCount = results.filter(r => !r.passed).length;

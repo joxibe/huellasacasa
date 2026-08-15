@@ -795,3 +795,93 @@ export async function reportarAbuso(reporteId, motivo, comentario = '') {
   // Modo Testing Node.js
   return { success: true };
 }
+
+/**
+ * Elimina un reporte, sus subcolecciones privadas, su foto en Storage y libera la cuota
+ * @param {string} reporteId 
+ */
+export async function eliminarReporte(reporteId) {
+  const user = getCurrentUser();
+  if (!user) {
+    throw new Error('Debes iniciar sesión para eliminar este reporte.');
+  }
+
+  const rep = await obtenerReportePorId(reporteId);
+  if (!rep) throw new Error('Reporte no encontrado.');
+
+  if (rep.creadorUid !== user.uid) {
+    throw new Error('Solo el autor puede eliminar este reporte.');
+  }
+
+  const db = asegurarFirestore();
+
+  // 1. Si tiene coincidencia activa pendiente, desvincular a la contraparte primero
+  if (rep.coincidenciaConReporteId) {
+    const idContraparte = rep.coincidenciaConReporteId;
+    const contraparte = await obtenerReportePorId(idContraparte);
+
+    if (contraparte) {
+      const updateContraparte = {
+        coincidenciaConReporteId: null,
+        confirmadoPorCreador: false,
+        confirmadoPorContraparte: false,
+        estado: contraparte.tipo,
+        fechaActualizacion: new Date().toISOString()
+      };
+
+      if (db) {
+        await db.collection('reportes').doc(contraparte.id).update(updateContraparte);
+      } else {
+        Object.assign(contraparte, updateContraparte);
+      }
+    }
+  }
+
+  // 2. Eliminar foto en Storage si existe
+  if (typeof window !== 'undefined' && !window.__TEST__ && window.firebase && window.firebase.storage && rep.fotoUrl && !rep.fotoUrl.startsWith('data:image/svg')) {
+    try {
+      const storageRef = window.firebase.storage().refFromURL(rep.fotoUrl);
+      await storageRef.delete();
+    } catch (stErr) {
+      console.warn('No se pudo borrar foto en Storage (puede que ya no exista):', stErr);
+    }
+  }
+
+  // 3. Eliminar documentos en Firestore y liberar cupo
+  if (db) {
+    await db.runTransaction(async (transaction) => {
+      const repRef = db.collection('reportes').doc(reporteId);
+      const contactoRef = repRef.collection('privado').doc('contacto');
+      const seguridadRef = repRef.collection('privado').doc('seguridad');
+      const userRef = db.collection('usuarios').doc(user.uid);
+
+      transaction.delete(contactoRef);
+      transaction.delete(seguridadRef);
+      transaction.delete(repRef);
+
+      // Si el reporte estaba activo, decrementar cuotas
+      if (rep.estado !== 'reunido' && rep.estado !== 'adoptado') {
+        const isPerdido = rep.tipo === 'perdido';
+        const isAdopcion = rep.tipo === 'en_adopcion';
+        transaction.update(userRef, {
+          reportesActivosCount: window.firebase.firestore.FieldValue.increment(-1),
+          perdidosActivosCount: isPerdido ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
+          encontradosActivosCount: (!isPerdido && !isAdopcion) ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
+          adopcionActivosCount: isAdopcion ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0)
+        });
+      }
+    });
+
+    return { success: true };
+  }
+
+  // Modo Testing Node.js
+  const idx = testStore.findIndex(r => r.id === reporteId);
+  if (idx !== -1) {
+    testStore.splice(idx, 1);
+  }
+  delete testContactosStore[reporteId];
+  delete testSeguridadStore[reporteId];
+
+  return { success: true };
+}
