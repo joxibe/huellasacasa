@@ -33,8 +33,12 @@ export async function subirFotoReporte(imageBlob, nombreReporteId) {
   // Estructura segura: reporteId como directorio para validación de propiedad en rules
   const storagePath = `reportes/${nombreReporteId}/${timestamp}.${extension}`;
 
-  // 1. Si Firebase Storage está disponible en el navegador
-  if (isConfigured && typeof window !== 'undefined' && window.firebase && window.firebase.storage) {
+  // 1. En el navegador real: Conexión estricta a Firebase Storage (falla si no hay conexión)
+  if (typeof window !== 'undefined' && !window.__TEST__) {
+    if (!isConfigured || !window.firebase || !window.firebase.storage) {
+      throw new Error('No se pudo conectar con Firebase Storage para subir la foto. Por favor verifica tu conexión a internet o intenta de nuevo.');
+    }
+
     const storageRef = window.firebase.storage().ref(storagePath);
     const metadata = {
       contentType: imageBlob.type || 'image/jpeg',
@@ -53,7 +57,7 @@ export async function subirFotoReporte(imageBlob, nombreReporteId) {
     };
   }
 
-  // 2. Modo Local / Testing (Mock de URL de Storage)
+  // 2. Modo Testing Node.js (Sin llamadas de red)
   const bucket = firebaseConfig.storageBucket || 'huellasacasa-23651.firebasestorage.app';
   const mockStorageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(storagePath)}?alt=media&token=mock-test-token`;
 

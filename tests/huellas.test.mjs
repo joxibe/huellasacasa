@@ -13,6 +13,7 @@ global.localStorage = {
 };
 
 global.window = {
+  __TEST__: true,
   firebase: null,
   location: { href: '' }
 };
@@ -28,6 +29,7 @@ const {
   crearReporte, obtenerMisReportes, obtenerReportes, obtenerReportePorId,
   sugerirCoincidencia, responderCoincidencia, marcarComoReunido,
   marcarComoAdoptado, cambiarAEnAdopcion, obtenerCuotasUsuario,
+  setFechaCreacionTest,
   LIMITE_PERDIDOS, LIMITE_ENCONTRADOS, LIMITE_ADOPCION, LIMITE_REPORTES_ACTIVOS
 } = await import('../public/js/services/reportes.service.js');
 
@@ -367,10 +369,7 @@ await assertThrows(
 );
 
 // Simular paso de 21 días
-const store = JSON.parse(localStorage.getItem('huellas_reportes_store'));
-const itemIdx = store.findIndex(r => r.id === repAdop.id);
-store[itemIdx].fechaCreacion = new Date(Date.now() - 21 * 24 * 3600 * 1000).toISOString();
-localStorage.setItem('huellas_reportes_store', JSON.stringify(store));
+setFechaCreacionTest(repAdop.id, new Date(Date.now() - 21 * 24 * 3600 * 1000).toISOString());
 
 // Ahora cambiarAEnAdopcion debe tener éxito
 await cambiarAEnAdopcion(repAdop.id);

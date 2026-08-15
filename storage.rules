@@ -16,11 +16,13 @@ service firebase.storage {
                     && resource != null
                     && request.resource.size < 500 * 1024
                     && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)')
+                    && firestore.exists(/databases/(default)/documents/reportes/$(reporteId))
                     && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid;
 
       // Eliminación permitida ÚNICAMENTE al creador original del reporte registrado en Firestore
       allow delete: if request.auth != null
                     && resource != null
+                    && firestore.exists(/databases/(default)/documents/reportes/$(reporteId))
                     && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid;
     }
   }

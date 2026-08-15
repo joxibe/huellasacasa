@@ -48,7 +48,10 @@ function notifySubscribers() {
  * Inicia sesión con Google
  */
 export async function loginWithGoogle() {
-  if (isConfigured && window.firebase && window.firebase.auth) {
+  if (typeof window !== 'undefined' && !window.__TEST__) {
+    if (!isConfigured || !window.firebase || !window.firebase.auth) {
+      throw new Error('No se pudo conectar con el servicio de autenticación de Firebase. Por favor revisa tu conexión a internet o intenta de nuevo.');
+    }
     const provider = new window.firebase.auth.GoogleAuthProvider();
     const result = await window.firebase.auth().signInWithPopup(provider);
     currentUser = {
@@ -57,17 +60,17 @@ export async function loginWithGoogle() {
       email: result.user.email,
       photoURL: result.user.photoURL || null
     };
-  } else {
-    // Modo Demo/Pruebas locales instantáneas
-    currentUser = {
-      uid: 'demo_user_cali_' + Math.random().toString(36).substring(2, 8),
-      displayName: 'Carlos Devia (Google)',
-      email: 'carlos.cali.emergencia@gmail.com',
-      photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
-    };
+    notifySubscribers();
+    return currentUser;
   }
 
-  localStorage.setItem('huellas_auth_user', JSON.stringify(currentUser));
+  // Entorno de testing Node.js
+  currentUser = {
+    uid: 'test_user_node',
+    displayName: 'Usuario de Pruebas',
+    email: 'test@huellasacasa.org',
+    photoURL: null
+  };
   notifySubscribers();
   return currentUser;
 }
@@ -76,11 +79,10 @@ export async function loginWithGoogle() {
  * Cierra la sesión
  */
 export async function logout() {
-  if (isConfigured && window.firebase && window.firebase.auth) {
+  if (typeof window !== 'undefined' && isConfigured && window.firebase && window.firebase.auth) {
     await window.firebase.auth().signOut();
   }
   currentUser = null;
-  localStorage.removeItem('huellas_auth_user');
   notifySubscribers();
 }
 

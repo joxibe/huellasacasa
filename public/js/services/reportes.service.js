@@ -1,3 +1,9 @@
+/**
+ * HUELLAS A CASA — Servicio de Reportes
+ * Gestiona la persistencia de reportes en Cloud Firestore con validación de cuotas,
+ * coincidencia bilateral, estados de adopción/reunión y protección de datos privados.
+ */
+
 import { isConfigured } from '../firebase-config.js';
 import { subirFotoReporte } from './storage.service.js';
 import { getCurrentUser } from './auth.service.js';
@@ -8,172 +14,33 @@ export const LIMITE_ENCONTRADOS = 3;
 export const LIMITE_ADOPCION = 3;
 export const LIMITE_REPORTES_ACTIVOS = 9;
 
-// Mock inicial realista de emergencia multiciudad para modo local/demo (Sin datos sensibles expuestos)
-const SEED_REPORTES = [
-  {
-    id: 'rep_cali_001',
-    tipo: 'perdido',
-    estado: 'perdido',
-    especie: 'perro',
-    tamano: 'mediano',
-    sexo: 'macho',
-    color: 'Dorado / Caramelo con patas blancas',
-    raza: 'Criollo / Golden Mestizo',
-    nombre: 'Simba',
-    ciudad: 'Cali',
-    ciudadLower: 'cali',
-    barrio: 'San Antonio',
-    barrioLower: 'san antonio',
-    fechaEvento: '2026-08-11',
-    senasVisibles: 'Collar azul gastado, mancha blanca en forma de estrella en el pecho',
-    fotoUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&auto=format&fit=crop&q=80',
-    fotoPath: 'reportes/rep_cali_001.jpg',
-    nombrePublicador: 'Valentina',
-    creadorUid: 'usr_demo_1',
-    reportesAbusoCount: 0,
-    coincidenciaConReporteId: null,
-    confirmadoPorCreador: false,
-    confirmadoPorContraparte: false,
-    fechaCreacion: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
-    fechaActualizacion: new Date().toISOString()
-  },
-  {
-    id: 'rep_pereira_002',
-    tipo: 'encontrado',
-    estado: 'encontrado',
-    especie: 'gato',
-    tamano: 'pequeno',
-    sexo: 'hembra',
-    color: 'Blanco con manchas atigradas grises',
-    raza: 'Mestizo',
-    nombre: 'No identificado',
-    ciudad: 'Pereira',
-    ciudadLower: 'pereira',
-    barrio: 'Circunvalar',
-    barrioLower: 'circunvalar',
-    fechaEvento: '2026-08-12',
-    senasVisibles: 'Ojos verdes, muy dócil, maúlla bajito',
-    fotoUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80',
-    fotoPath: 'reportes/rep_pereira_002.jpg',
-    nombrePublicador: 'Andrés Morales',
-    necesitaVet: false,
-    situacionLugar: 'en_casa_temporal',
-    creadorUid: 'usr_demo_2',
-    reportesAbusoCount: 0,
-    coincidenciaConReporteId: null,
-    confirmadoPorCreador: false,
-    confirmadoPorContraparte: false,
-    fechaCreacion: new Date(Date.now() - 3600 * 1000 * 12).toISOString(),
-    fechaActualizacion: new Date().toISOString()
-  },
-  {
-    id: 'rep_manizales_003',
-    tipo: 'encontrado',
-    estado: 'en_adopcion',
-    especie: 'perro',
-    tamano: 'grande',
-    sexo: 'macho',
-    color: 'Negro azabache',
-    raza: 'Labrador Mestizo',
-    nombre: 'Rocky',
-    ciudad: 'Manizales',
-    ciudadLower: 'manizales',
-    barrio: 'Chipre',
-    barrioLower: 'chipre',
-    fechaEvento: '2026-08-10',
-    senasVisibles: 'Cola larga, cicatriz antigua y sana en oreja izquierda',
-    fotoUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
-    fotoPath: 'reportes/rep_manizales_003.jpg',
-    nombrePublicador: 'Fundación Huellitas Eje',
-    necesitaVet: false,
-    situacionLugar: 'en_casa_temporal',
-    creadorUid: 'usr_demo_3',
-    reportesAbusoCount: 0,
-    coincidenciaConReporteId: null,
-    confirmadoPorCreador: false,
-    confirmadoPorContraparte: false,
-    fechaCreacion: new Date(Date.now() - 3600 * 1000 * 24 * 22).toISOString(),
-    fechaActualizacion: new Date().toISOString()
-  },
-  {
-    id: 'rep_armenia_004',
-    tipo: 'perdido',
-    estado: 'reunido',
-    especie: 'perro',
-    tamano: 'pequeno',
-    sexo: 'macho',
-    color: 'Blanco con orejas café',
-    raza: 'Jack Russell Terrier',
-    nombre: 'Max',
-    ciudad: 'Armenia',
-    ciudadLower: 'armenia',
-    barrio: 'Norte',
-    barrioLower: 'norte',
-    fechaEvento: '2026-08-10',
-    senasVisibles: 'Placa con nombre Max',
-    fotoUrl: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&auto=format&fit=crop&q=80',
-    fotoPath: 'reportes/rep_armenia_004.jpg',
-    nombrePublicador: 'Diana P.',
-    creadorUid: 'usr_demo_4',
-    reportesAbusoCount: 0,
-    coincidenciaConReporteId: null,
-    confirmadoPorCreador: true,
-    confirmadoPorContraparte: true,
-    fechaCreacion: new Date(Date.now() - 3600 * 1000 * 24 * 2).toISOString(),
-    fechaActualizacion: new Date().toISOString()
-  },
-  {
-    id: 'rep_quibdo_005',
-    tipo: 'perdido',
-    estado: 'perdido',
-    especie: 'gato',
-    tamano: 'pequeno',
-    sexo: 'macho',
-    color: 'Naranja atigrado',
-    raza: 'Criollo',
-    nombre: 'Michi',
-    ciudad: 'Quibdó',
-    ciudadLower: 'quibdo',
-    barrio: 'El Silencio',
-    barrioLower: 'el silencio',
-    fechaEvento: '2026-08-12',
-    senasVisibles: 'Puntas de las patas blancas',
-    fotoUrl: 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600&auto=format&fit=crop&q=80',
-    fotoPath: 'reportes/rep_quibdo_005.jpg',
-    nombrePublicador: 'Camilo J.',
-    creadorUid: 'usr_demo_5',
-    reportesAbusoCount: 0,
-    coincidenciaConReporteId: null,
-    confirmadoPorCreador: false,
-    confirmadoPorContraparte: false,
-    fechaCreacion: new Date(Date.now() - 3600 * 1000 * 6).toISOString(),
-    fechaActualizacion: new Date().toISOString()
-  }
-];
+// Almacén en memoria exclusivo para tests unitarios en Node.js
+let testStore = [];
+let testContactosStore = {};
+let testSeguridadStore = {};
 
-// Contactos aislados de los seeds para modo demo
-const SEED_CONTACTOS = {
-  'rep_cali_001': { telefonoContacto: '3165551234', medioContacto: 'whatsapp' },
-  'rep_pereira_002': { telefonoContacto: '3157778899', medioContacto: 'ambos' },
-  'rep_manizales_003': { telefonoContacto: '3104445566', medioContacto: 'whatsapp' },
-  'rep_armenia_004': { telefonoContacto: '3189991122', medioContacto: 'whatsapp' },
-  'rep_quibdo_005': { telefonoContacto: '3173334455', medioContacto: 'whatsapp' }
-};
-
-// Base de datos local en localStorage si no hay Firebase configurado
-function obtenerStoreLocal() {
-  try {
-    const data = localStorage.getItem('huellas_reportes_store');
-    if (data) return JSON.parse(data);
-  } catch (e) {
-    console.warn('Error al leer store local:', e);
+function asegurarFirestore() {
+  if (typeof window !== 'undefined' && !window.__TEST__) {
+    if (!isConfigured || !window.firebase || !window.firebase.firestore) {
+      throw new Error('No se pudo conectar con Firebase Firestore. Por favor verifica tu conexión a internet o intenta de nuevo.');
+    }
+    return window.firebase.firestore();
   }
-  localStorage.setItem('huellas_reportes_store', JSON.stringify(SEED_REPORTES));
-  return SEED_REPORTES;
+  return null;
 }
 
-function guardarStoreLocal(reportes) {
-  localStorage.setItem('huellas_reportes_store', JSON.stringify(reportes));
+/**
+ * Helper para testing en Node.js (npm test)
+ */
+export function resetTestStore() {
+  testStore = [];
+  testContactosStore = {};
+  testSeguridadStore = {};
+}
+
+export function setFechaCreacionTest(id, fechaIso) {
+  const rep = testStore.find(r => r.id === id);
+  if (rep) rep.fechaCreacion = fechaIso;
 }
 
 /**
@@ -184,10 +51,10 @@ export async function obtenerReportes(filtros = {}) {
   const { ciudad = 'Cali', barrioTexto, tipo, especie, texto } = filtros;
   const ciudadKey = normalizarTexto(ciudad);
 
-  if (isConfigured && window.firebase && window.firebase.firestore) {
+  const db = asegurarFirestore();
+  if (db) {
     // 1. Filtrar en el servidor por ciudadLower normalizado
-    let query = window.firebase.firestore().collection('reportes')
-      .where('ciudadLower', '==', ciudadKey);
+    let query = db.collection('reportes').where('ciudadLower', '==', ciudadKey);
 
     if (tipo && tipo !== 'todos') {
       if (tipo === 'en_adopcion') {
@@ -226,8 +93,8 @@ export async function obtenerReportes(filtros = {}) {
     return lista;
   }
 
-  // Fallback reactivo local
-  let lista = [...obtenerStoreLocal()];
+  // Modo Testing Node.js
+  let lista = [...testStore];
 
   // 1. Filtro principal por ciudad
   lista = lista.filter(r => normalizarTexto(r.ciudadLower || r.ciudad) === ciudadKey);
@@ -250,7 +117,7 @@ export async function obtenerReportes(filtros = {}) {
     lista = lista.filter(r => r.especie === especie);
   }
 
-  // 4. Filtro por barrio en el cliente
+  // 4. Filtro por barrio
   if (barrioTexto && barrioTexto.trim()) {
     const bNorm = normalizarTexto(barrioTexto);
     lista = lista.filter(r => (r.barrioLower && r.barrioLower.includes(bNorm)) || (r.barrio && normalizarTexto(r.barrio).includes(bNorm)));
@@ -276,14 +143,14 @@ export async function obtenerReportes(filtros = {}) {
  * Obtiene un reporte público por ID
  */
 export async function obtenerReportePorId(id) {
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const doc = await window.firebase.firestore().collection('reportes').doc(id).get();
+  const db = asegurarFirestore();
+  if (db) {
+    const doc = await db.collection('reportes').doc(id).get();
     if (!doc.exists) return null;
     return { id: doc.id, ...doc.data() };
   }
 
-  const lista = obtenerStoreLocal();
-  return lista.find(r => r.id === id) || null;
+  return testStore.find(r => r.id === id) || null;
 }
 
 /**
@@ -335,8 +202,8 @@ export async function crearReporte(datos, imageBlob) {
     fechaActualizacion: new Date().toISOString()
   };
 
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const db = window.firebase.firestore();
+  const db = asegurarFirestore();
+  if (db) {
     const userRef = db.collection('usuarios').doc(user.uid);
     const reporteRef = db.collection('reportes').doc(idReporte);
     const contactoRef = reporteRef.collection('privado').doc('contacto');
@@ -398,9 +265,8 @@ export async function crearReporte(datos, imageBlob) {
     return nuevoReporte;
   }
 
-  // Modo Local: validar conteo diferenciado (3 perdidos, 3 encontrados, 3 adopción, máx 9 total)
-  const lista = obtenerStoreLocal();
-  const reportesUsuarioActivos = lista.filter(r => r.creadorUid === user.uid && r.estado !== 'reunido' && r.estado !== 'adoptado');
+  // Modo Testing Node.js: validar conteo diferenciado
+  const reportesUsuarioActivos = testStore.filter(r => r.creadorUid === user.uid && r.estado !== 'reunido' && r.estado !== 'adoptado');
   const perdidosUsuario = reportesUsuarioActivos.filter(r => r.tipo === 'perdido' && r.estado !== 'en_adopcion').length;
   const encontradosUsuario = reportesUsuarioActivos.filter(r => r.tipo === 'encontrado' && r.estado !== 'en_adopcion').length;
   const adopcionUsuario = reportesUsuarioActivos.filter(r => r.tipo === 'en_adopcion' || r.estado === 'en_adopcion').length;
@@ -418,20 +284,15 @@ export async function crearReporte(datos, imageBlob) {
     throw new Error(`Has alcanzado el límite máximo total de ${LIMITE_REPORTES_ACTIVOS} reportes activos por cuenta.`);
   }
 
-  lista.unshift(nuevoReporte);
-  guardarStoreLocal(lista);
-
-  // Guardar datos de contacto en store aislado protegido
-  localStorage.setItem(`huellas_contacto_${idReporte}`, JSON.stringify({
+  testStore.unshift(nuevoReporte);
+  testContactosStore[idReporte] = {
     telefonoContacto: datos.telefonoContacto,
     medioContacto: datos.medioContacto || 'whatsapp'
-  }));
-
-  // Guardar seña privada en store aislado
-  localStorage.setItem(`huellas_privado_${idReporte}`, JSON.stringify({
+  };
+  testSeguridadStore[idReporte] = {
     senaVerificacionPrivada: datos.senaVerificacionPrivada,
     creadorUid: user.uid
-  }));
+  };
 
   return nuevoReporte;
 }
@@ -443,156 +304,184 @@ export async function obtenerCuotasUsuario(uid) {
   if (!uid) {
     return {
       perdidosActivos: 0,
-      limitePerdidos: LIMITE_PERDIDOS,
       encontradosActivos: 0,
-      limiteEncontrados: LIMITE_ENCONTRADOS,
       adopcionActivos: 0,
-      limiteAdopcion: LIMITE_ADOPCION,
       totalActivos: 0,
+      limitePerdidos: LIMITE_PERDIDOS,
+      limiteEncontrados: LIMITE_ENCONTRADOS,
+      limiteAdopcion: LIMITE_ADOPCION,
       limiteTotal: LIMITE_REPORTES_ACTIVOS
     };
   }
 
-  const mis = await obtenerMisReportes(uid);
-  const activos = mis.filter(r => r.estado !== 'reunido' && r.estado !== 'adoptado');
+  const db = asegurarFirestore();
+  if (db) {
+    const userDoc = await db.collection('usuarios').doc(uid).get();
+    if (userDoc.exists) {
+      const d = userDoc.data();
+      return {
+        perdidosActivos: d.perdidosActivosCount || 0,
+        encontradosActivos: d.encontradosActivosCount || 0,
+        adopcionActivos: d.adopcionActivosCount || 0,
+        totalActivos: d.reportesActivosCount || 0,
+        limitePerdidos: LIMITE_PERDIDOS,
+        limiteEncontrados: LIMITE_ENCONTRADOS,
+        limiteAdopcion: LIMITE_ADOPCION,
+        limiteTotal: LIMITE_REPORTES_ACTIVOS
+      };
+    }
+  }
+
+  // Modo Testing Node.js
+  const activos = testStore.filter(r => r.creadorUid === uid && r.estado !== 'reunido' && r.estado !== 'adoptado');
   const perdidos = activos.filter(r => r.tipo === 'perdido' && r.estado !== 'en_adopcion').length;
   const encontrados = activos.filter(r => r.tipo === 'encontrado' && r.estado !== 'en_adopcion').length;
   const adopcion = activos.filter(r => r.tipo === 'en_adopcion' || r.estado === 'en_adopcion').length;
 
   return {
     perdidosActivos: perdidos,
-    limitePerdidos: LIMITE_PERDIDOS,
     encontradosActivos: encontrados,
-    limiteEncontrados: LIMITE_ENCONTRADOS,
     adopcionActivos: adopcion,
+    totalActivos: activos.length,
+    limitePerdidos: LIMITE_PERDIDOS,
+    limiteEncontrados: LIMITE_ENCONTRADOS,
     limiteAdopcion: LIMITE_ADOPCION,
-    totalActivos: perdidos + encontrados + adopcion,
     limiteTotal: LIMITE_REPORTES_ACTIVOS
   };
 }
 
 /**
- * Obtiene los reportes creados por el usuario (o el usuario autenticado actual)
+ * Obtiene los reportes creados por el usuario activo
  */
 export async function obtenerMisReportes(uid) {
   const targetUid = uid || (getCurrentUser() ? getCurrentUser().uid : null);
   if (!targetUid) return [];
 
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const snapshot = await window.firebase.firestore().collection('reportes')
+  const db = asegurarFirestore();
+  if (db) {
+    const snapshot = await db.collection('reportes')
       .where('creadorUid', '==', targetUid)
       .orderBy('fechaCreacion', 'desc')
       .get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
-  const lista = obtenerStoreLocal();
-  return lista.filter(r => r.creadorUid === targetUid);
+  return testStore.filter(r => r.creadorUid === targetUid)
+    .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
 }
 
 /**
- * Cambia el estado de un reporte de "encontrado" a "en_adopcion" si pasaron 20+ días
+ * Cambia un reporte de tipo 'encontrado' a 'en_adopcion' tras 20 días
  */
 export async function cambiarAEnAdopcion(reporteId) {
   const user = getCurrentUser();
-  if (!user) throw new Error('Sesión requerida.');
-
-  const reporte = await obtenerReportePorId(reporteId);
-  if (!reporte) throw new Error('Reporte no encontrado.');
-  if (reporte.creadorUid !== user.uid) throw new Error('Solo el autor puede cambiar el estado.');
-
-  const dias = (Date.now() - new Date(reporte.fechaCreacion).getTime()) / (1000 * 3600 * 24);
-  if (dias < 20) {
-    throw new Error(`Deben transcurrir al menos 20 días para pasar a adopción (han pasado ${Math.floor(dias)} días).`);
+  if (!user) {
+    throw new Error('Debes iniciar sesión para actualizar el reporte.');
   }
 
-  // Validar cuota de adopción
-  const cuotas = await obtenerCuotasUsuario(user.uid);
-  if (cuotas.adopcionActivos >= LIMITE_ADOPCION) {
-    throw new Error(`Has alcanzado el límite máximo de ${LIMITE_ADOPCION} reportes en adopción.`);
-  }
+  const db = asegurarFirestore();
+  if (db) {
+    const reporteRef = db.collection('reportes').doc(reporteId);
+    const userRef = db.collection('usuarios').doc(user.uid);
 
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const db = window.firebase.firestore();
-    const batch = db.batch();
-    const repRef = db.collection('reportes').doc(reporteId);
-    batch.update(repRef, {
-      estado: 'en_adopcion',
-      tipo: 'en_adopcion',
-      fechaActualizacion: new Date().toISOString()
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(reporteRef);
+      if (!doc.exists) throw new Error('Reporte no encontrado');
+      const data = doc.data();
+
+      if (data.creadorUid !== user.uid) {
+        throw new Error('Solo el autor puede cambiar el estado a Adopción.');
+      }
+      if (data.tipo !== 'encontrado') {
+        throw new Error('Solo los reportes de tipo encontrado pueden pasar a Adopción.');
+      }
+
+      const dias = (Date.now() - new Date(data.fechaCreacion).getTime()) / (1000 * 3600 * 24);
+      if (dias < 20) {
+        throw new Error(`Se requieren al menos 20 días desde el reporte inicial (han pasado ${Math.floor(dias)} días).`);
+      }
+
+      transaction.update(reporteRef, {
+        estado: 'en_adopcion',
+        tipo: 'en_adopcion',
+        fechaActualizacion: new Date().toISOString()
+      });
+
+      transaction.update(userRef, {
+        encontradosActivosCount: window.firebase.firestore.FieldValue.increment(-1),
+        adopcionActivosCount: window.firebase.firestore.FieldValue.increment(1)
+      });
     });
 
-    const userRef = db.collection('usuarios').doc(user.uid);
-    batch.set(userRef, {
-      encontradosActivosCount: window.firebase.firestore.FieldValue.increment(-1),
-      adopcionActivosCount: window.firebase.firestore.FieldValue.increment(1)
-    }, { merge: true });
-
-    await batch.commit();
-    return;
+    return { success: true };
   }
 
-  const lista = obtenerStoreLocal();
-  const idx = lista.findIndex(r => r.id === reporteId);
-  if (idx !== -1) {
-    lista[idx].estado = 'en_adopcion';
-    lista[idx].tipo = 'en_adopcion';
-    lista[idx].fechaActualizacion = new Date().toISOString();
-    guardarStoreLocal(lista);
+  // Modo Testing Node.js
+  const rep = testStore.find(r => r.id === reporteId);
+  if (!rep) throw new Error('Reporte no encontrado');
+  if (rep.creadorUid !== user.uid) throw new Error('Solo el autor puede cambiar el estado a Adopción.');
+  if (rep.tipo !== 'encontrado') throw new Error('Solo los reportes de tipo encontrado pueden pasar a Adopción.');
+
+  const dias = (Date.now() - new Date(rep.fechaCreacion).getTime()) / (1000 * 3600 * 24);
+  if (dias < 20) {
+    throw new Error(`Se requieren al menos 20 días desde el reporte inicial (han pasado ${Math.floor(dias)} días).`);
   }
+
+  rep.estado = 'en_adopcion';
+  rep.tipo = 'en_adopcion';
+  rep.fechaActualizacion = new Date().toISOString();
+  return { success: true };
 }
 
 /**
- * Cierra un reporte en adopción marcándolo como Adoptado (Liberando cupo)
+ * Marca un reporte de adopción como Adoptado (cierre definitivo y libera cupo)
  */
 export async function marcarComoAdoptado(reporteId) {
   const user = getCurrentUser();
-  if (!user) throw new Error('Sesión requerida.');
-
-  const reporte = await obtenerReportePorId(reporteId);
-  if (!reporte) throw new Error('Reporte no encontrado.');
-  if (reporte.creadorUid !== user.uid) {
-    throw new Error('Solo el autor puede marcar este reporte como Adoptado.');
-  }
-  if (reporte.estado !== 'en_adopcion') {
-    throw new Error('Solo los reportes en adopción pueden cerrarse como Adoptados.');
+  if (!user) {
+    throw new Error('Debes iniciar sesión para cerrar el caso.');
   }
 
-  const updateAdoptado = {
-    estado: 'adoptado',
-    fechaActualizacion: new Date().toISOString()
-  };
-
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const db = window.firebase.firestore();
-    const batch = db.batch();
-
-    const repRef = db.collection('reportes').doc(reporteId);
-    batch.update(repRef, updateAdoptado);
-
+  const db = asegurarFirestore();
+  if (db) {
+    const reporteRef = db.collection('reportes').doc(reporteId);
     const userRef = db.collection('usuarios').doc(user.uid);
-    batch.set(userRef, {
-      reportesActivosCount: window.firebase.firestore.FieldValue.increment(-1),
-      adopcionActivosCount: window.firebase.firestore.FieldValue.increment(-1)
-    }, { merge: true });
 
-    await batch.commit();
-    return;
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(reporteRef);
+      if (!doc.exists) throw new Error('Reporte no encontrado');
+      const data = doc.data();
+
+      if (data.creadorUid !== user.uid) {
+        throw new Error('Solo el autor puede marcar como adoptado.');
+      }
+
+      transaction.update(reporteRef, {
+        estado: 'adoptado',
+        fechaActualizacion: new Date().toISOString()
+      });
+
+      transaction.update(userRef, {
+        reportesActivosCount: window.firebase.firestore.FieldValue.increment(-1),
+        adopcionActivosCount: window.firebase.firestore.FieldValue.increment(-1)
+      });
+    });
+
+    return { success: true };
   }
 
-  const lista = obtenerStoreLocal();
-  const repIdx = lista.findIndex(r => r.id === reporteId);
-  if (repIdx !== -1) {
-    lista[repIdx].estado = 'adoptado';
-    lista[repIdx].fechaActualizacion = new Date().toISOString();
-    guardarStoreLocal(lista);
-  }
+  // Modo Testing Node.js
+  const rep = testStore.find(r => r.id === reporteId);
+  if (!rep) throw new Error('Reporte no encontrado');
+  if (rep.creadorUid !== user.uid) throw new Error('Solo el autor puede marcar como adoptado.');
+
+  rep.estado = 'adoptado';
+  rep.fechaActualizacion = new Date().toISOString();
+  return { success: true };
 }
 
 /**
- * Obtiene los datos de contacto protegidos del reporte (Requiere sesión iniciada)
- * @param {string} reporteId 
- * @returns {Promise<{telefonoContacto: string, medioContacto: string}>}
+ * Obtiene los datos de contacto protegidos de un reporte
  */
 export async function obtenerContactoReporte(reporteId) {
   const user = getCurrentUser();
@@ -600,336 +489,294 @@ export async function obtenerContactoReporte(reporteId) {
     throw new Error('Debes iniciar sesión con Google para ver los datos de contacto.');
   }
 
-  const reporte = await obtenerReportePorId(reporteId);
-  if (!reporte) throw new Error('Reporte no encontrado.');
-
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const doc = await window.firebase.firestore()
-      .collection('reportes').doc(reporteId)
-      .collection('privado').doc('contacto')
-      .get();
-    if (doc.exists) {
-      return {
-        telefonoContacto: doc.data().telefonoContacto || '',
-        medioContacto: doc.data().medioContacto || 'whatsapp'
-      };
-    }
-    throw new Error('No se encontraron datos de contacto para este reporte.');
+  const db = asegurarFirestore();
+  if (db) {
+    const doc = await db.collection('reportes').doc(reporteId)
+      .collection('privado').doc('contacto').get();
+    if (!doc.exists) return null;
+    return doc.data();
   }
 
-  // Modo local / demo
-  const datosContacto = localStorage.getItem(`huellas_contacto_${reporteId}`);
-  if (datosContacto) {
-    try {
-      return JSON.parse(datosContacto);
-    } catch (e) {}
-  }
-
-  // Fallback para seeds en modo demo
-  if (typeof SEED_CONTACTOS !== 'undefined' && SEED_CONTACTOS[reporteId]) {
-    return SEED_CONTACTOS[reporteId];
-  }
-
-  throw new Error('No se encontraron datos de contacto para este reporte.');
+  return testContactosStore[reporteId] || null;
 }
 
 /**
- * Obtiene la seña privada de verificación (Solo para el autor autenticado)
+ * Obtiene la seña secreta privada de verificación (Solo legible por el autor)
  */
 export async function obtenerSenaPrivada(reporteId) {
   const user = getCurrentUser();
-  if (!user) throw new Error('Sesión requerida.');
+  if (!user) {
+    throw new Error('Debes iniciar sesión para consultar este dato.');
+  }
 
-  const reporte = await obtenerReportePorId(reporteId);
-  if (!reporte) throw new Error('Reporte no encontrado.');
-  if (reporte.creadorUid !== user.uid) {
+  const db = asegurarFirestore();
+  if (db) {
+    const doc = await db.collection('reportes').doc(reporteId)
+      .collection('privado').doc('seguridad').get();
+    if (!doc.exists) return null;
+    const data = doc.data();
+    if (data.creadorUid !== user.uid) {
+      throw new Error('Acceso no autorizado: Solo el autor del reporte puede ver la seña secreta.');
+    }
+    return data.senaVerificacionPrivada || '';
+  }
+
+  const datosPrivados = testSeguridadStore[reporteId];
+  if (!datosPrivados) return null;
+  if (datosPrivados.creadorUid !== user.uid) {
     throw new Error('Acceso no autorizado: Solo el autor del reporte puede ver la seña secreta.');
   }
-
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const doc = await window.firebase.firestore()
-      .collection('reportes').doc(reporteId)
-      .collection('privado').doc('seguridad')
-      .get();
-    if (doc.exists) {
-      return doc.data().senaVerificacionPrivada || 'Sin seña registrada.';
-    }
-    return 'Sin seña registrada.';
-  }
-
-  const datosPrivados = localStorage.getItem(`huellas_privado_${reporteId}`);
-  if (datosPrivados) {
-    try {
-      const parsed = JSON.parse(datosPrivados);
-      return parsed.senaVerificacionPrivada || 'Sin seña registrada.';
-    } catch (e) {}
-  }
-  return 'Sin seña registrada.';
+  return datosPrivados.senaVerificacionPrivada || '';
 }
 
 /**
- * Sugerir coincidencia entre dos reportes con validaciones estrictas anti-fraude
+ * Sugiere una coincidencia entre dos reportes (Perdido <-> Encontrado)
  */
 export async function sugerirCoincidencia(reporteIdA, reporteIdB) {
   const user = getCurrentUser();
-  if (!user) throw new Error('Debes iniciar sesión con Google para sugerir coincidencias.');
+  if (!user) {
+    throw new Error('Debes iniciar sesión con Google para sugerir una coincidencia.');
+  }
 
   if (reporteIdA === reporteIdB) {
-    throw new Error('No puedes vincular un reporte consigo mismo.');
+    throw new Error('No puedes sugerir coincidencia de un reporte consigo mismo.');
   }
 
   const repA = await obtenerReportePorId(reporteIdA);
   const repB = await obtenerReportePorId(reporteIdB);
 
   if (!repA || !repB) {
-    throw new Error('Uno o ambos reportes no existen. Verifica los IDs introducidos.');
+    throw new Error('Uno o ambos reportes no existen.');
   }
 
-  // 1. Validar que no estén ya reunidos o adoptados (cerrados)
-  if (repA.estado === 'reunido' || repB.estado === 'reunido' || repA.estado === 'adoptado' || repB.estado === 'adoptado') {
+  if (repA.estado === 'reunido' || repA.estado === 'adoptado' || repB.estado === 'reunido' || repB.estado === 'adoptado') {
     throw new Error('No se puede sugerir coincidencia con un caso que ya fue cerrado.');
   }
 
-  // 2. Validar que uno sea Perdido y el otro Encontrado (o En Adopción)
-  const tiposValidos = (repA.tipo === 'perdido' && (repB.tipo === 'encontrado' || repB.tipo === 'en_adopcion')) ||
-                       (repB.tipo === 'perdido' && (repA.tipo === 'encontrado' || repA.tipo === 'en_adopcion'));
-  
-  if (!tiposValidos) {
-    throw new Error('Una coincidencia solo puede ser entre una mascota Perdida y una mascota Encontrada o en Adopción.');
-  }
-
-  // 3. Validar que no tengan ya otra coincidencia activa en curso
-  if (repA.estado === 'coincidencia_sugerida' || repB.estado === 'coincidencia_sugerida') {
-    throw new Error('Uno de los reportes ya tiene una sugerencia de coincidencia en revisión. Debe confirmarse o rechazarse antes de vincular otro caso.');
+  if (repA.coincidenciaConReporteId || repB.coincidenciaConReporteId) {
+    throw new Error('Uno de los reportes ya tiene una sugerencia en proceso.');
   }
 
   const updatesA = {
-    estado: 'coincidencia_sugerida',
     coincidenciaConReporteId: reporteIdB,
-    confirmadoPorCreador: false,
+    estado: 'coincidencia_sugerida',
+    confirmadoPorCreador: repA.creadorUid === user.uid,
     confirmadoPorContraparte: false,
     fechaActualizacion: new Date().toISOString()
   };
 
   const updatesB = {
-    estado: 'coincidencia_sugerida',
     coincidenciaConReporteId: reporteIdA,
-    confirmadoPorCreador: false,
+    estado: 'coincidencia_sugerida',
+    confirmadoPorCreador: repB.creadorUid === user.uid,
     confirmadoPorContraparte: false,
     fechaActualizacion: new Date().toISOString()
   };
 
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    await window.firebase.firestore().collection('reportes').doc(reporteIdA).update(updatesA);
-    await window.firebase.firestore().collection('reportes').doc(reporteIdB).update(updatesB);
-    return;
+  const db = asegurarFirestore();
+  if (db) {
+    await db.collection('reportes').doc(reporteIdA).update(updatesA);
+    await db.collection('reportes').doc(reporteIdB).update(updatesB);
+    return { success: true };
   }
 
-  const lista = obtenerStoreLocal();
-  lista.forEach(r => {
-    if (r.id === reporteIdA) Object.assign(r, updatesA);
-    if (r.id === reporteIdB) Object.assign(r, updatesB);
-  });
-  guardarStoreLocal(lista);
+  // Modo Testing Node.js
+  Object.assign(repA, updatesA);
+  Object.assign(repB, updatesB);
+  return { success: true };
 }
 
 /**
- * Valida o rechaza una coincidencia bilateralmente (Requiere que ambas partes confirmen)
+ * Responde a una sugerencia de coincidencia (Aceptar / Rechazar)
  */
-export async function responderCoincidencia(reporteId, esAprobada) {
+export async function responderCoincidencia(reporteId, aceptar) {
   const user = getCurrentUser();
-  if (!user) throw new Error('Sesión requerida.');
-
-  const reporte = await obtenerReportePorId(reporteId);
-  if (!reporte || !reporte.coincidenciaConReporteId) {
-    throw new Error('Este reporte no tiene una coincidencia vinculada.');
+  if (!user) {
+    throw new Error('Debes iniciar sesión para responder a la coincidencia.');
   }
 
-  const contraparte = await obtenerReportePorId(reporte.coincidenciaConReporteId);
+  const rep = await obtenerReportePorId(reporteId);
+  if (!rep) throw new Error('Reporte no encontrado.');
 
-  const lista = obtenerStoreLocal();
-  const repIdx = lista.findIndex(r => r.id === reporteId);
-  const contraIdx = contraparte ? lista.findIndex(r => r.id === contraparte.id) : -1;
+  if (rep.creadorUid !== user.uid) {
+    throw new Error('Solo el autor de este reporte puede responder a la sugerencia.');
+  }
 
-  if (!esAprobada) {
-    // Si se rechaza, ambos reportes se desvinculan limpiamente y vuelven a su tipo original
-    const resetUpdates = {
+  const idContraparte = rep.coincidenciaConReporteId;
+  const contraparte = idContraparte ? await obtenerReportePorId(idContraparte) : null;
+
+  const db = asegurarFirestore();
+
+  if (!aceptar) {
+    const updateRechazo = {
       coincidenciaConReporteId: null,
       confirmadoPorCreador: false,
       confirmadoPorContraparte: false,
+      estado: rep.tipo,
       fechaActualizacion: new Date().toISOString()
     };
 
-    if (isConfigured && window.firebase && window.firebase.firestore) {
-      await window.firebase.firestore().collection('reportes').doc(reporteId).update({
-        ...resetUpdates,
-        estado: reporte.tipo
-      });
+    if (db) {
+      await db.collection('reportes').doc(reporteId).update(updateRechazo);
       if (contraparte) {
-        await window.firebase.firestore().collection('reportes').doc(contraparte.id).update({
-          ...resetUpdates,
-          estado: contraparte.tipo
+        await db.collection('reportes').doc(contraparte.id).update({
+          coincidenciaConReporteId: null,
+          confirmadoPorCreador: false,
+          confirmadoPorContraparte: false,
+          estado: contraparte.tipo,
+          fechaActualizacion: new Date().toISOString()
         });
       }
-    } else {
-      if (repIdx !== -1) {
-        lista[repIdx].estado = lista[repIdx].tipo;
-        Object.assign(lista[repIdx], resetUpdates);
-      }
-      if (contraIdx !== -1) {
-        lista[contraIdx].estado = lista[contraIdx].tipo;
-        Object.assign(lista[contraIdx], resetUpdates);
-      }
-      guardarStoreLocal(lista);
+      return { success: true, estado: rep.tipo };
     }
-    return;
-  }
 
-  // Si se aprueba por esta parte
-  const esAutorReporteActual = reporte.creadorUid === user.uid;
-  const esAutorContraparte = contraparte ? contraparte.creadorUid === user.uid : false;
-
-  // Actualizar banderas en memoria/local
-  if (repIdx !== -1) {
-    if (esAutorReporteActual) lista[repIdx].confirmadoPorCreador = true;
-    if (esAutorContraparte) lista[repIdx].confirmadoPorContraparte = true;
-  }
-  if (contraIdx !== -1) {
-    if (esAutorContraparte) lista[contraIdx].confirmadoPorCreador = true;
-    if (esAutorReporteActual) lista[contraIdx].confirmadoPorContraparte = true;
-  }
-
-  // Verificar si AMBAS partes han confirmado
-  const repConfirmado = lista[repIdx] ? (lista[repIdx].confirmadoPorCreador && lista[repIdx].confirmadoPorContraparte) : false;
-  const contraConfirmado = contraIdx !== -1 ? (lista[contraIdx].confirmadoPorCreador && lista[contraIdx].confirmadoPorContraparte) : false;
-  const ambosConfirmaron = repConfirmado || contraConfirmado || (esAutorReporteActual && reporte.confirmadoPorContraparte) || (esAutorContraparte && reporte.confirmadoPorCreador);
-
-  const nuevoEstado = ambosConfirmaron ? 'confirmado_ambas_partes' : 'coincidencia_sugerida';
-
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const updatePayloadA = {
-      confirmadoPorCreador: repIdx !== -1 ? lista[repIdx].confirmadoPorCreador : true,
-      confirmadoPorContraparte: repIdx !== -1 ? lista[repIdx].confirmadoPorContraparte : false,
-      estado: nuevoEstado,
-      fechaActualizacion: new Date().toISOString()
-    };
-    const updatePayloadB = {
-      confirmadoPorCreador: contraIdx !== -1 ? lista[contraIdx].confirmadoPorCreador : true,
-      confirmadoPorContraparte: contraIdx !== -1 ? lista[contraIdx].confirmadoPorContraparte : false,
-      estado: nuevoEstado,
-      fechaActualizacion: new Date().toISOString()
-    };
-    await window.firebase.firestore().collection('reportes').doc(reporteId).update(updatePayloadA);
+    // Modo Testing Node.js
+    Object.assign(rep, updateRechazo);
     if (contraparte) {
-      await window.firebase.firestore().collection('reportes').doc(contraparte.id).update(updatePayloadB);
+      Object.assign(contraparte, {
+        coincidenciaConReporteId: null,
+        confirmadoPorCreador: false,
+        confirmadoPorContraparte: false,
+        estado: contraparte.tipo,
+        fechaActualizacion: new Date().toISOString()
+      });
     }
-  } else {
-    if (repIdx !== -1) lista[repIdx].estado = nuevoEstado;
-    if (contraIdx !== -1) lista[contraIdx].estado = nuevoEstado;
-    guardarStoreLocal(lista);
+    return { success: true, estado: rep.tipo };
   }
+
+  // ACEPTAR
+  const contraYaConfirmo = contraparte && (contraparte.confirmadoPorCreador || rep.confirmadoPorContraparte);
+  const nuevoEstado = contraYaConfirmo ? 'confirmado_ambas_partes' : 'coincidencia_sugerida';
+
+  const updatePayloadA = {
+    confirmadoPorCreador: true,
+    estado: nuevoEstado,
+    fechaActualizacion: new Date().toISOString()
+  };
+
+  const updatePayloadB = {
+    confirmadoPorContraparte: true,
+    estado: nuevoEstado,
+    fechaActualizacion: new Date().toISOString()
+  };
+
+  if (db) {
+    await db.collection('reportes').doc(reporteId).update(updatePayloadA);
+    if (contraparte) {
+      await db.collection('reportes').doc(contraparte.id).update(updatePayloadB);
+    }
+    return { success: true, estado: nuevoEstado };
+  }
+
+  // Modo Testing Node.js
+  Object.assign(rep, updatePayloadA);
+  if (contraparte) {
+    Object.assign(contraparte, updatePayloadB);
+  }
+  return { success: true, estado: nuevoEstado };
 }
 
 /**
- * Cierra el caso y lo marca como Reunido (Actualiza ambos reportes vinculados y libera cupos)
+ * Cierra un caso marcándolo como Reunido (libera cupo de reportes activos)
  */
 export async function marcarComoReunido(reporteId) {
   const user = getCurrentUser();
-  if (!user) throw new Error('Sesión requerida.');
-
-  const reporte = await obtenerReportePorId(reporteId);
-  if (!reporte) throw new Error('Reporte no encontrado.');
-
-  // Si está en coincidencia sugerida pero no confirmado por ambas partes, evitar cierre unilateral
-  if (reporte.estado === 'coincidencia_sugerida') {
-    throw new Error('Para cerrar un caso con coincidencia, ambas partes deben confirmar primero.');
+  if (!user) {
+    throw new Error('Debes iniciar sesión para cerrar el reporte.');
   }
 
-  const contraparteId = reporte.coincidenciaConReporteId;
-  const contraparte = contraparteId ? await obtenerReportePorId(contraparteId) : null;
+  const rep = await obtenerReportePorId(reporteId);
+  if (!rep) throw new Error('Reporte no encontrado.');
 
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    const db = window.firebase.firestore();
-    const batch = db.batch();
+  if (rep.creadorUid !== user.uid) {
+    throw new Error('Solo el autor puede marcar este reporte como reunido.');
+  }
 
-    const updateReunido = {
-      estado: 'reunido',
-      fechaActualizacion: new Date().toISOString()
-    };
+  const idContraparte = rep.coincidenciaConReporteId;
+  const contraparte = idContraparte ? await obtenerReportePorId(idContraparte) : null;
 
-    // 1. Actualizar estado del reporte principal
-    const repRef = db.collection('reportes').doc(reporteId);
-    batch.update(repRef, updateReunido);
+  const db = asegurarFirestore();
+  if (db) {
+    await db.runTransaction(async (transaction) => {
+      const repRef = db.collection('reportes').doc(reporteId);
+      const userRefA = db.collection('usuarios').doc(user.uid);
 
-    // 2. Liberar cupo activo para el creador principal
-    if (reporte.creadorUid) {
-      const userRef = db.collection('usuarios').doc(reporte.creadorUid);
-      const isPerdido = reporte.tipo === 'perdido';
-      const isAdopcion = reporte.tipo === 'en_adopcion' || reporte.estado === 'en_adopcion';
-      batch.set(userRef, {
+      transaction.update(repRef, {
+        estado: 'reunido',
+        fechaActualizacion: new Date().toISOString()
+      });
+
+      const isPerdido = rep.tipo === 'perdido';
+      const isAdopcion = rep.tipo === 'en_adopcion';
+      transaction.update(userRefA, {
         reportesActivosCount: window.firebase.firestore.FieldValue.increment(-1),
         perdidosActivosCount: isPerdido ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
         encontradosActivosCount: (!isPerdido && !isAdopcion) ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
         adopcionActivosCount: isAdopcion ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0)
-      }, { merge: true });
-    }
+      });
 
-    // 3. Si hubo coincidencia bilateral, actualizar y liberar cupo de la contraparte
-    if (contraparteId && contraparte) {
-      const contraRef = db.collection('reportes').doc(contraparteId);
-      batch.update(contraRef, updateReunido);
+      if (contraparte) {
+        const contraRef = db.collection('reportes').doc(contraparte.id);
+        const userRefB = db.collection('usuarios').doc(contraparte.creadorUid);
 
-      if (contraparte.creadorUid && contraparte.creadorUid !== reporte.creadorUid) {
-        const contraUserRef = db.collection('usuarios').doc(contraparte.creadorUid);
+        transaction.update(contraRef, {
+          estado: 'reunido',
+          fechaActualizacion: new Date().toISOString()
+        });
+
         const isContraPerdido = contraparte.tipo === 'perdido';
-        const isContraAdopcion = contraparte.tipo === 'en_adopcion' || contraparte.estado === 'en_adopcion';
-        batch.set(contraUserRef, {
+        const isContraAdopcion = contraparte.tipo === 'en_adopcion';
+        transaction.update(userRefB, {
           reportesActivosCount: window.firebase.firestore.FieldValue.increment(-1),
           perdidosActivosCount: isContraPerdido ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
           encontradosActivosCount: (!isContraPerdido && !isContraAdopcion) ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
           adopcionActivosCount: isContraAdopcion ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0)
-        }, { merge: true });
+        });
       }
-    }
+    });
 
-    await batch.commit();
-    return;
+    return { success: true };
   }
 
-  const lista = obtenerStoreLocal();
-  const repIdx = lista.findIndex(r => r.id === reporteId);
-  if (repIdx !== -1) {
-    lista[repIdx].estado = 'reunido';
-    lista[repIdx].fechaActualizacion = new Date().toISOString();
+  // Modo Testing Node.js
+  rep.estado = 'reunido';
+  rep.fechaActualizacion = new Date().toISOString();
+
+  if (contraparte) {
+    contraparte.estado = 'reunido';
+    contraparte.fechaActualizacion = new Date().toISOString();
   }
-  if (contraparteId) {
-    const contraIdx = lista.findIndex(r => r.id === contraparteId);
-    if (contraIdx !== -1) {
-      lista[contraIdx].estado = 'reunido';
-      lista[contraIdx].fechaActualizacion = new Date().toISOString();
-    }
-  }
-  guardarStoreLocal(lista);
+
+  return { success: true };
 }
 
 /**
- * Envía un reporte de abuso para moderación
+ * Registra una denuncia o reporte de abuso sobre una publicación
  */
-export async function reportarAbuso(reporteId, motivo, comentario) {
+export async function reportarAbuso(reporteId, motivo, comentario = '') {
   const user = getCurrentUser();
-  if (!user) throw new Error('Debes iniciar sesión para reportar un anuncio.');
+  if (!user) {
+    throw new Error('Debes iniciar sesión con Google para reportar una publicación.');
+  }
 
   const nuevoAbuso = {
-    id: 'abuso_' + Date.now(),
-    reporteId,
+    reporteId: reporteId,
+    motivo: motivo,
+    comentario: comentario.trim(),
     usuarioDenuncianteUid: user.uid,
-    motivo,
-    comentario: comentario || '',
-    fecha: new Date().toISOString()
+    usuarioDenuncianteEmail: user.email,
+    fechaCreacion: new Date().toISOString()
   };
 
-  if (isConfigured && window.firebase && window.firebase.firestore) {
-    await window.firebase.firestore().collection('reportes_abuso').add(nuevoAbuso);
+  const db = asegurarFirestore();
+  if (db) {
+    await db.collection('reportes_abuso').add(nuevoAbuso);
+    await db.collection('reportes').doc(reporteId).update({
+      reportesAbusoCount: window.firebase.firestore.FieldValue.increment(1)
+    });
+    return { success: true };
   }
-  return true;
+
+  // Modo Testing Node.js
+  return { success: true };
 }

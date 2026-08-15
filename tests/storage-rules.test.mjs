@@ -10,7 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 
-const PROJECT_ID = 'demo-huellasacasa-storage-test';
+const PROJECT_ID = 'huellasacasa-23651';
 const STORAGE_RULES = fs.readFileSync(path.resolve('./storage.rules'), 'utf8');
 const FIRESTORE_RULES = fs.readFileSync(path.resolve('./firestore.rules'), 'utf8');
 
