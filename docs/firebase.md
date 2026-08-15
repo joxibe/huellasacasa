@@ -97,3 +97,17 @@ publica solo y más rápido.
 - **Indexes (`.indexes.json`)**: configuración necesaria para que Firestore pueda responder rápido a consultas que combinan varios filtros a la vez (ej. ciudad + tipo + orden por fecha).
 - **Emulator Suite**: una copia simulada de Firebase que corre en tu propia máquina, para probar sin tocar los datos reales de producción.
 - **Blaze**: el plan de pago-por-uso de Firebase (necesario para Storage desde 2026), que sigue siendo gratis mientras te mantengas dentro de los límites del nivel gratuito.
+
+---
+
+## 8. Gestión de Denuncias y Moderación en la Consola
+
+1. **Panel de Denuncias:**
+   - Ingresa a [https://console.firebase.google.com/project/huellasacasa-23651/firestore/data/~2Freportes_abuso](https://console.firebase.google.com/project/huellasacasa-23651/firestore/data/~2Freportes_abuso).
+   - Cada documento contiene el `reporteId`, `motivo`, `comentario` y el correo del denunciante.
+2. **Inspección y Moderación:**
+   - Abre la URL: `https://huellasacasa-23651.web.app/detalle.html?id={reporteId}`.
+   - Para eliminar un caso fraudulento, bórralo en la colección `/reportes/{reporteId}` y su foto en la pestaña **Storage**.
+   - Borra el documento en `/reportes_abuso` para archivar la denuncia.
+3. **Recepción Automática de Alertas por Correo (Post-MVP):**
+   - Puedes instalar la extensión oficial **"Trigger Email from Firestore"** en la consola de Firebase configurando tu correo `jxrosero3@gmail.com` para recibir alertas inmediatas cuando se cree un documento en `/reportes_abuso`.

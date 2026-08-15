@@ -36,8 +36,16 @@
    - El creador puede eliminar su publicación en cualquier momento desde *Mis Reportes* o desde la vista de *Detalle*.
    - El proceso de eliminación es integral: borra el documento público `/reportes/{id}`, las subcolecciones `/privado/contacto` y `/privado/seguridad`, el archivo de imagen en Cloud Storage, desvincula automáticamente a la contraparte si había un match activo y libera el cupo de la cuenta.
 
-7. **Moderación Comunitaria (Botón Reportar):**
-   - Toda tarjeta incluye un botón visible de **"Reportar este anuncio"** que registra la denuncia en la colección `/reportes_abuso` para revisión y moderación.
+7. **Moderación Comunitaria y Gestión de Denuncias (`/reportes_abuso`):**
+   - **Autenticación obligatoria:** Solo usuarios con sesión activa de Google pueden reportar una publicación, previniendo bots o ataques anónimos.
+   - **Anti-inflado por ID determinista:** Las denuncias se guardan con ID `${reporteId}_${usuarioDenuncianteUid}`. Si un usuario reporta varias veces el mismo caso, sobreescribe su registro sin duplicar conteos.
+   - **Aislamiento total y sigilo:** El documento público `/reportes/{id}` **NO contiene ningún campo ni contador de denuncias**. Las alertas van directo a `/reportes_abuso` con `allow read: if false;`, evitando alertar a potenciales estafadores.
+   - **Protocolo de gestión para el administrador:**
+     1. Ingresar a la [Consola de Firebase](https://console.firebase.google.com/project/huellasacasa-23651/firestore) > `reportes_abuso`.
+     2. Revisar `reporteId`, `motivo`, `comentario` y `usuarioDenuncianteEmail`.
+     3. Inspeccionar la publicación en vivo: `https://huellasacasa-23651.web.app/detalle.html?id={reporteId}`.
+     4. Si amerita sanción, eliminar el documento en `/reportes/{reporteId}` y su foto en Storage.
+     5. Eliminar la denuncia en `/reportes_abuso` una vez procesada.
 
 8. **Minimización, Sin Trackers y Cache-Control Limpio:**
    - Sin librerías de tracking publicitario ni cookies de terceros.
