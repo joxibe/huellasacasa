@@ -3,20 +3,31 @@
  * Gestiona el inicio de sesión y sincronización con /usuarios/{uid}
  */
 
-import { isConfigured } from '../firebase-config.js';
+import { isFirebaseReady } from '../firebase-config.js';
 
 // Estado local reactivo de la sesión
 let currentUser = null;
 const authSubscribers = [];
 
-// Inicializar sesión desde localStorage si existe modo local/demo
-try {
-  const savedUser = localStorage.getItem('huellas_auth_user');
-  if (savedUser) {
-    currentUser = JSON.parse(savedUser);
+// Sincronización nativa con Firebase Auth en el navegador
+if (typeof window !== 'undefined' && !window.__TEST__ && window.firebase && window.firebase.auth) {
+  try {
+    window.firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = {
+          uid: user.uid,
+          displayName: user.displayName || 'Usuario de Google',
+          email: user.email,
+          photoURL: user.photoURL || null
+        };
+      } else {
+        currentUser = null;
+      }
+      notifySubscribers();
+    });
+  } catch (e) {
+    console.warn('Error al conectar listener de Firebase Auth:', e);
   }
-} catch (e) {
-  console.warn('No se pudo restaurar la sesión local', e);
 }
 
 /**
@@ -49,7 +60,7 @@ function notifySubscribers() {
  */
 export async function loginWithGoogle() {
   if (typeof window !== 'undefined' && !window.__TEST__) {
-    if (!isConfigured || !window.firebase || !window.firebase.auth) {
+    if (!isFirebaseReady() || !window.firebase || !window.firebase.auth) {
       throw new Error('No se pudo conectar con el servicio de autenticación de Firebase. Por favor revisa tu conexión a internet o intenta de nuevo.');
     }
     const provider = new window.firebase.auth.GoogleAuthProvider();
@@ -79,7 +90,7 @@ export async function loginWithGoogle() {
  * Cierra la sesión
  */
 export async function logout() {
-  if (typeof window !== 'undefined' && isConfigured && window.firebase && window.firebase.auth) {
+  if (typeof window !== 'undefined' && !window.__TEST__ && isFirebaseReady() && window.firebase && window.firebase.auth) {
     await window.firebase.auth().signOut();
   }
   currentUser = null;

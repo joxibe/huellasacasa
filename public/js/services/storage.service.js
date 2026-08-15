@@ -3,7 +3,7 @@
  * Gestiona la subida de fotos comprimidas a Cloud Storage y la obtención de downloadURL.
  */
 
-import { isConfigured, firebaseConfig } from '../firebase-config.js';
+import { isFirebaseReady, firebaseConfig } from '../firebase-config.js';
 
 // Placeholder SVG local autónomo (cero dependencias externas / cero peticiones a Unsplash)
 const PLACEHOLDER_SVG_URL = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" fill="%23F3F4F6"><rect width="400" height="300" fill="%23F3F4F6"/><path d="M200 110c-16.5 0-30 13.5-30 30 0 13.5 9 24.8 21.4 28.5L180 200h40l-11.4-31.5c12.4-3.7 21.4-15 21.4-28.5 0-16.5-13.5-30-30-30zm-45-10c-8.3 0-15 6.7-15 15s6.7 15 15 15 15-6.7 15-15-6.7-15-15-15zm90 0c-8.3 0-15 6.7-15 15s6.7 15 15 15 15-6.7 15-15-6.7-15-15-15z" fill="%239CA3AF"/><text x="200" y="240" font-family="system-ui,sans-serif" font-size="14" font-weight="600" fill="%236B7280" text-anchor="middle">Sin foto disponible</text></svg>';
@@ -35,7 +35,7 @@ export async function subirFotoReporte(imageBlob, nombreReporteId) {
 
   // 1. En el navegador real: Conexión estricta a Firebase Storage (falla si no hay conexión)
   if (typeof window !== 'undefined' && !window.__TEST__) {
-    if (!isConfigured || !window.firebase || !window.firebase.storage) {
+    if (!isFirebaseReady() || !window.firebase || !window.firebase.storage) {
       throw new Error('No se pudo conectar con Firebase Storage para subir la foto. Por favor verifica tu conexión a internet o intenta de nuevo.');
     }
 

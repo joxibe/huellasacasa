@@ -4,7 +4,7 @@
  * coincidencia bilateral, estados de adopción/reunión y protección de datos privados.
  */
 
-import { isConfigured } from '../firebase-config.js';
+import { isFirebaseReady } from '../firebase-config.js';
 import { subirFotoReporte } from './storage.service.js';
 import { getCurrentUser } from './auth.service.js';
 import { normalizarTexto } from '../utils/formato.js';
@@ -21,7 +21,7 @@ let testSeguridadStore = {};
 
 function asegurarFirestore() {
   if (typeof window !== 'undefined' && !window.__TEST__) {
-    if (!isConfigured || !window.firebase || !window.firebase.firestore) {
+    if (!isFirebaseReady() || !window.firebase || !window.firebase.firestore) {
       throw new Error('No se pudo conectar con Firebase Firestore. Por favor verifica tu conexión a internet o intenta de nuevo.');
     }
     return window.firebase.firestore();
@@ -71,7 +71,13 @@ export async function obtenerReportes(filtros = {}) {
       query = query.where('especie', '==', especie);
     }
 
-    const snapshot = await query.orderBy('fechaCreacion', 'desc').get();
+    let snapshot;
+    try {
+      snapshot = await query.orderBy('fechaCreacion', 'desc').get();
+    } catch (queryErr) {
+      console.warn('Consulta sin índice compuesto finalizado, ejecutando fallback ordenado en cliente:', queryErr);
+      snapshot = await query.get();
+    }
     let lista = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     // 2. Filtrar en el cliente por barrioTexto (sin importar tildes/mayúsculas)
@@ -359,11 +365,19 @@ export async function obtenerMisReportes(uid) {
 
   const db = asegurarFirestore();
   if (db) {
-    const snapshot = await db.collection('reportes')
-      .where('creadorUid', '==', targetUid)
-      .orderBy('fechaCreacion', 'desc')
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let snapshot;
+    try {
+      snapshot = await db.collection('reportes')
+        .where('creadorUid', '==', targetUid)
+        .orderBy('fechaCreacion', 'desc')
+        .get();
+    } catch (err) {
+      snapshot = await db.collection('reportes')
+        .where('creadorUid', '==', targetUid)
+        .get();
+    }
+    const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return docs.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
   }
 
   return testStore.filter(r => r.creadorUid === targetUid)
