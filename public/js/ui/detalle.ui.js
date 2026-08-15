@@ -20,6 +20,7 @@ import {
 } from '../utils/formato.js';
 import { exigirAutenticacion } from './auth-modal.ui.js';
 import { getCurrentUser, onAuthStateChanged } from '../services/auth.service.js';
+import { mostrarModalConfirmacion } from './confirm-modal.ui.js';
 
 export async function inicializarDetalle() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -194,20 +195,27 @@ function renderDetalleContenido(container, reporte) {
   // Eliminar reporte desde detalle (exclusivo para el creador)
   const btnEliminarDetalle = document.getElementById('btn-eliminar-detalle');
   if (btnEliminarDetalle) {
-    btnEliminarDetalle.addEventListener('click', async () => {
-      if (confirm('¿Seguro que quieres eliminar este reporte? Se borrarán sus datos y foto, y se liberará tu cupo de publicación.')) {
-        try {
-          btnEliminarDetalle.disabled = true;
-          btnEliminarDetalle.textContent = 'Eliminando...';
-          await eliminarReporte(reporte.id);
-          alert('Tu reporte ha sido eliminado correctamente.');
-          window.location.href = 'mis-reportes.html';
-        } catch (e) {
-          alert('Error al eliminar: ' + e.message);
-          btnEliminarDetalle.disabled = false;
-          btnEliminarDetalle.textContent = '🗑️ Eliminar publicación';
+    btnEliminarDetalle.addEventListener('click', () => {
+      mostrarModalConfirmacion({
+        titulo: '¿Eliminar esta publicación?',
+        mensaje: 'Se borrarán sus datos y foto, y se liberará tu cupo de publicación. Esta acción no se puede deshacer.',
+        textoConfirmar: '🗑️ Eliminar',
+        textoCancelar: 'Cancelar',
+        esPeligro: true,
+        onConfirm: async () => {
+          try {
+            btnEliminarDetalle.disabled = true;
+            btnEliminarDetalle.textContent = 'Eliminando...';
+            await eliminarReporte(reporte.id);
+            alert('Tu reporte ha sido eliminado correctamente.');
+            window.location.href = 'mis-reportes.html';
+          } catch (e) {
+            alert('Error al eliminar: ' + e.message);
+            btnEliminarDetalle.disabled = false;
+            btnEliminarDetalle.textContent = '🗑️ Eliminar publicación';
+          }
         }
-      }
+      });
     });
   }
 

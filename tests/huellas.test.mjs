@@ -125,9 +125,21 @@ assert(formatearEspecie('gato').icon === '🐱', 'formatearEspecie — gato icon
 assert(formatearEspecie('otro').label === 'Otro', 'formatearEspecie — otro label');
 assert(formatearEspecie('desconocido').label === 'Mascota', 'formatearEspecie — fallback');
 
-const urlWA = generarEnlaceWhatsApp('3001234567', { nombre: 'Toby', tipo: 'perdido', ciudad: 'Cali', barrio: null });
+const urlWA = generarEnlaceWhatsApp('3001234567', { id: 'rep_cali_100', nombre: 'Toby', tipo: 'perdido', ciudad: 'Cali', barrio: 'San Antonio' });
 assert(urlWA.startsWith('https://wa.me/573001234567'), 'generarEnlaceWhatsApp — prefijo 57');
-assert(urlWA.includes('Toby'), 'generarEnlaceWhatsApp — incluye nombre');
+assert(decodeURIComponent(urlWA).includes('Toby'), 'generarEnlaceWhatsApp — incluye nombre');
+assert(decodeURIComponent(urlWA).includes('San Antonio, Cali'), 'generarEnlaceWhatsApp — incluye barrio y ciudad');
+assert(decodeURIComponent(urlWA).includes('https://huellasacasa-23651.web.app/detalle.html?id=rep_cali_100'), 'generarEnlaceWhatsApp — incluye link directo al reporte');
+assert(!decodeURIComponent(urlWA).includes('Pendiente') && !decodeURIComponent(urlWA).includes('('), 'generarEnlaceWhatsApp — NO incluye texto de estado técnico ni paréntesis innecesarios');
+
+// Test: No duplicar ciudad si barrio ya la contiene o es igual
+const urlWACiudadDup = generarEnlaceWhatsApp('3001234567', { id: 'rep_cali_101', nombre: 'Luna', tipo: 'perdido', ciudad: 'Cali', barrio: 'Cali' });
+assert(!decodeURIComponent(urlWACiudadDup).includes('Cali, Cali'), 'generarEnlaceWhatsApp — NO duplica ciudad si barrio es igual a ciudad');
+
+// Test: Mascota encontrada sin nombre asignado
+const urlWASinNombre = generarEnlaceWhatsApp('3001234567', { id: 'rep_cali_102', nombre: '', tipo: 'encontrado', ciudad: 'Pereira', barrio: 'El Poblado' });
+assert(decodeURIComponent(urlWASinNombre).includes('una mascota encontrada'), 'generarEnlaceWhatsApp — fallback descriptivo cuando no hay nombre');
+assert(decodeURIComponent(urlWASinNombre).includes('El Poblado, Pereira'), 'generarEnlaceWhatsApp — incluye ubicación combinada');
 
 const tiempoReciente = formatoTiempoRelativo(new Date(Date.now() - 30000).toISOString());
 assert(tiempoReciente === 'Hace un momento', 'formatoTiempoRelativo — hace un momento');

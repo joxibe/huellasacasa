@@ -34,19 +34,49 @@ export function formatoTiempoRelativo(fecha) {
 }
 
 /**
- * Construye enlace directo de WhatsApp con mensaje contextual
+ * Construye enlace directo de WhatsApp con mensaje contextual optimizado
  * @param {string} telefono 
  * @param {Object} reporte 
  * @returns {string}
  */
-export function generarEnlaceWhatsApp(telefono, reporte) {
-  const numeroLimpio = telefono.replace(/\D/g, '');
+export function generarEnlaceWhatsApp(telefono, reporte = {}) {
+  const numeroLimpio = (telefono || '').replace(/\D/g, '');
   const prefijo = numeroLimpio.startsWith('57') ? numeroLimpio : `57${numeroLimpio}`;
   
-  const nombreMascota = reporte.nombre ? `(${reporte.nombre})` : '';
-  const tipoTexto = reporte.tipo === 'perdido' ? 'tu reporte de mascota perdida' : 'la mascota encontrada que publicaste';
-  const ubicacionTexto = reporte.barrio ? `${reporte.barrio}, ${reporte.ciudad}` : `${reporte.ciudad}`;
-  const textoMensaje = `Hola, te contacto desde Huellas a Casa sobre ${tipoTexto} ${nombreMascota} en ${ubicacionTexto}. ¿Aún sigue activo el caso?`;
+  // 1. Identificar nombre o descripción natural (sin palabras de estado técnico)
+  let nombreODescripcion;
+  if (reporte.nombre && reporte.nombre.trim()) {
+    nombreODescripcion = reporte.nombre.trim();
+  } else if (reporte.tipo === 'perdido') {
+    nombreODescripcion = 'una mascota perdida';
+  } else if (reporte.tipo === 'en_adopcion') {
+    nombreODescripcion = 'una mascota en adopción';
+  } else {
+    nombreODescripcion = 'una mascota encontrada';
+  }
+
+  // 2. Formatear zona evitando duplicar la ciudad si el barrio ya la contiene o es idéntica
+  const barrio = (reporte.barrio || '').trim();
+  const ciudad = (reporte.ciudad || 'Cali').trim();
+  let zona = ciudad;
+
+  if (barrio) {
+    const barrioLower = barrio.toLowerCase();
+    const ciudadLower = ciudad.toLowerCase();
+    if (barrioLower === ciudadLower || barrioLower.includes(ciudadLower)) {
+      zona = barrio;
+    } else {
+      zona = `${barrio}, ${ciudad}`;
+    }
+  }
+
+  // 3. Link directo al reporte
+  const url = reporte.id 
+    ? `https://huellasacasa-23651.web.app/detalle.html?id=${reporte.id}` 
+    : 'https://huellasacasa-23651.web.app';
+
+  // 4. Mensaje natural, claro y amigable
+  const textoMensaje = `Hola 👋, te escribo desde Huellas a Casa sobre el reporte de ${nombreODescripcion} en ${zona}. Aquí está el reporte: ${url} ¿Sigue activo el caso?`;
   
   return `https://wa.me/${prefijo}?text=${encodeURIComponent(textoMensaje)}`;
 }

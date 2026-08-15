@@ -17,6 +17,7 @@ import {
 } from '../services/reportes.service.js';
 import { onAuthStateChanged, loginWithGoogle } from '../services/auth.service.js';
 import { formatoTiempoRelativo, formatearEstado, formatearEspecie } from '../utils/formato.js';
+import { mostrarModalConfirmacion } from './confirm-modal.ui.js';
 
 let authListenerUnsubscribe = null;
 
@@ -394,21 +395,28 @@ function vincularAccionesMisReportes() {
 
   // Eliminar Reporte
   document.querySelectorAll('.btn-eliminar-reporte').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-id');
-      if (confirm('¿Seguro que quieres eliminar este reporte? Esta acción no se puede deshacer.')) {
-        try {
-          btn.disabled = true;
-          btn.textContent = 'Eliminando...';
-          await eliminarReporte(id);
-          alert('El reporte ha sido eliminado correctamente y tu cupo ha sido liberado.');
-          inicializarMisReportes();
-        } catch (e) {
-          alert('Error al eliminar el reporte: ' + e.message);
-          btn.disabled = false;
-          btn.textContent = '🗑️ Eliminar reporte';
+      mostrarModalConfirmacion({
+        titulo: '¿Eliminar este reporte?',
+        mensaje: 'Se borrarán sus datos y foto, y se liberará tu cupo de publicación. Esta acción no se puede deshacer.',
+        textoConfirmar: '🗑️ Eliminar',
+        textoCancelar: 'Cancelar',
+        esPeligro: true,
+        onConfirm: async () => {
+          try {
+            btn.disabled = true;
+            btn.textContent = 'Eliminando...';
+            await eliminarReporte(id);
+            alert('El reporte ha sido eliminado correctamente y tu cupo ha sido liberado.');
+            inicializarMisReportes();
+          } catch (e) {
+            alert('Error al eliminar el reporte: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = '🗑️ Eliminar reporte';
+          }
         }
-      }
+      });
     });
   });
 }
