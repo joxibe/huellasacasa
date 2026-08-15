@@ -17,10 +17,11 @@ Conectar a personas que perdieron una mascota con personas que encontraron una, 
 2. Inicia sesión con Google y publica un reporte eligiendo entre: **Perdí mi mascota**, **Encontré una mascota** o **Dar en adopción**.
 3. Cualquier visitante puede buscar y filtrar reportes por ciudad, zona, especie, estado, etc.
 4. Si alguien tiene información o desea adoptar, inicia sesión y pulsa **Contactar** → se abre WhatsApp (`wa.me`) con el mensaje contextual preformateado.
-5. **Cierre directo de caso:** Si el dueño encuentra a su mascota por sus propios medios, pulsa `🐾 Ya regresó a casa` en "Mis Reportes" para cerrar el caso a **Reunido** y liberar su cupo al instante.
-6. **Coincidencias comunitarias:** Cuando dos reportes (uno "perdido" y uno "encontrado") parecen coincidir, cualquier usuario puede sugerir el Match mediante el ID único. Ambas partes validan la tarjeta comparativa y, si aprueban, se confirma y se marca como **Reunido** liberando los cupos de ambos.
-7. **Paso a Adopción:** Si un reporte "encontrado" no tiene reclamo tras 20+ días de custodia, el autor puede pasarlo a **En adopción**.
-8. **Cierre de Adopción:** Cuando la mascota es entregada a su familia definitiva, se marca como **Adoptado** liberando el cupo.
+5. **Cierre directo de caso:** Si el dueño encuentra a su mascota por sus propios medios, pulsa `🐾 Ya regresó a casa` en "Mis Reportes" para cerrar el caso a **Reunido** y liberar su cupo al instante (siempre que no tenga un match activo pendiente).
+6. **Buscador Visual de Coincidencias:** Cuando dos reportes (uno "perdido" y uno "encontrado") parecen coincidir, cualquier usuario puede sugerir el Match mediante un buscador visual con fotos y filtros reactivos (o ingresando el ID directo). Ambas partes validan la tarjeta comparativa en "Mis Reportes" y, si aprueban, se confirma y se marca como **Reunido** liberando los cupos de ambos.
+7. **Eliminación y corrección de errores:** Si el creador se equivoca o desea retirar su caso, puede pulsar `🗑️ Eliminar reporte` (en "Mis Reportes" o en la ficha de "Detalle"), lo que borra el documento, sus subcolecciones privadas, la foto en Storage, desvincula a la contraparte si había coincidencia y libera su cupo de inmediato.
+8. **Paso a Adopción:** Si un reporte "encontrado" no tiene reclamo tras 20+ días de custodia, el autor puede pasarlo a **En adopción**.
+9. **Cierre de Adopción:** Cuando la mascota es entregada a su familia definitiva, se marca como **Adoptado** liberando el cupo.
 
 ## 4. Estados de un reporte
 

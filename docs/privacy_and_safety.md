@@ -1,10 +1,10 @@
 # Privacidad, Seguridad y Anti-Fraude — Huellas a Casa
 
-> **Marco de Referencia:** Ley 1581 de 2012 (Protección de Datos Personales en Colombia) y protocolos de seguridad en situaciones de emergencia.
+> **Marco de Referencia:** Ley 1581 de 2012 (Protección de Datos Personales en Colombia), principios de privacidad por diseño y protocolos de seguridad en emergencias.
 
 ---
 
-## 🛡️ 1. Principios de Protección de Datos
+## 🛡️ 1. Principios de Protección de Datos y Anti-Fraude
 
 1. **Ubicación Aproximada Únicamente:**
    - La plataforma **solo almacena y exhibe la Zona, Barrio o Comuna** (ej: "San Fernando", "Aguablanca", "Limonar").
@@ -12,30 +12,37 @@
    - La entrega física o ubicación exacta se acuerda exclusivamente de persona a persona en WhatsApp una vez validada la identidad.
 
 2. **Aislamiento Estricto de la Seña Privada de Verificación:**
-   - Para evitar que terceros inescrupulosos reclamen mascotas que no les pertenecen, el publicador registra una *seña privada* (ej. "cicatriz en la pata izquierda", "mancha oculta en el paladar").
-   - Esta seña se almacena en la subcolección privada `/reportes/{id}/privado/seguridad`.
-   - Las reglas de Firestore (`firestore.rules`) impiden que cualquier usuario distinto al creador del reporte pueda leer este documento.
+   - Para evitar que terceros inescrupulosos reclamen mascotas que no les pertenecen, el publicador registra una *seña privada secreta* (ej. "cicatriz debajo de la pata trasera", "mancha oculta en el paladar").
+   - Esta seña se almacena en la subcolección privada `/reportes/{id}/privado/seguridad`, con su propio campo `creadorUid`.
+   - Las reglas de Firestore (`firestore.rules`) impiden de forma autónoma que cualquier usuario distinto al creador legítimo pueda leer este documento.
    - Antes de revelar la ubicación exacta por WhatsApp, el dueño/rescatista le pide a la contraparte describir esa seña secreta.
 
 3. **Contacto Protegido a Nivel de Base de Datos (Firestore Rules):**
    - El documento público `/reportes/{id}` **no contiene teléfono, medio de contacto ni correo del creador**.
    - Los datos de contacto viven aislados en la subcolección `/reportes/{id}/privado/contacto`, protegida por reglas de Firestore (`allow read: if request.auth != null;`).
-   - Los visitantes no autenticados solo ven la ficha pública; el botón "Contactar por WhatsApp" consulta la subcolección protegida únicamente tras autenticarse con Google, manteniendo trazabilidad y previniendo scraping o estafas masivas.
+   - Los visitantes anónimos solo ven la ficha pública; el botón "Contactar por WhatsApp" consulta la subcolección protegida únicamente tras autenticarse con Google, manteniendo trazabilidad y previniendo scraping o estafas masivas.
 
-4. **Límite de Reportes Activos por Cuenta (Anti-Spam / Anti-Mercadeo Ilegal):**
+4. **Límite de Reportes Activos por Cuenta (Anti-Spam / Anti-Acaparamiento):**
    - Máximo **3 reportes de perdidos**, **3 de encontrados** y **3 en adopción** (tope total de **9 reportes activos** por cuenta de Google).
-   - **Liberación de cupo**: Cuando un reporte se cierra exitosamente como `reunido` o `adoptado`, los contadores de cuota de los autores involucrados se decrementan atómicamente, liberando el cupo para futuros reportes.
+   - Validado tanto en el cliente como en el servidor (`firestore.rules` con función `canCreateReport()`).
+   - **Liberación de cupo**: Al cerrar un caso exitosamente (`reunido`/`adoptado`) o al eliminarlo, los contadores de cuota se decrementan atómicamente, liberando el cupo de inmediato.
 
-5. **Sugerencias de Coincidencia Comunitarias por Terceros:**
-   - Cualquier usuario autenticado (vecinos, rescatistas o voluntarios) puede sugerir una coincidencia entre dos publicaciones distintas ingresando el ID del otro reporte.
+5. **Sugerencias de Coincidencia Seguras (Buscador Visual y Validación Bilateral):**
+   - Cualquier usuario autenticado (vecinos, rescatistas o voluntarios) puede sugerir una coincidencia seleccionando la foto del caso opuesto en el buscador visual o ingresando el ID del otro reporte.
    - Los autores originales de ambos reportes reciben la tarjeta comparativa en "Mis Reportes" para validar o rechazar mutuamente el caso.
+   - Ninguna parte puede forzar el cierre unilateral como `reunido` mientras exista un vínculo activo pendiente (blindaje CASO A y CASO B en `firestore.rules`).
 
-6. **Moderación Comunitaria (Botón Reportar):**
-   - Toda tarjeta incluye un botón visible de **"Reportar este anuncio"** que registra el caso en la colección `reportes_abuso`.
+6. **Derecho de Supresión (Eliminación Completa de Publicaciones):**
+   - El creador puede eliminar su publicación en cualquier momento desde *Mis Reportes* o desde la vista de *Detalle*.
+   - El proceso de eliminación es integral: borra el documento público `/reportes/{id}`, las subcolecciones `/privado/contacto` y `/privado/seguridad`, el archivo de imagen en Cloud Storage, desvincula automáticamente a la contraparte si había un match activo y libera el cupo de la cuenta.
 
-7. **Minimización y Cero Trackers:**
+7. **Moderación Comunitaria (Botón Reportar):**
+   - Toda tarjeta incluye un botón visible de **"Reportar este anuncio"** que registra la denuncia en la colección `/reportes_abuso` para revisión y moderación.
+
+8. **Minimización, Sin Trackers y Cache-Control Limpio:**
    - Sin librerías de tracking publicitario ni cookies de terceros.
-   - Todo el procesamiento de imágenes se realiza localmente en el dispositivo antes de ser enviado a Firebase.
+   - Compresión local de imágenes en el dispositivo (< 300KB) antes de la subida a Storage.
+   - Políticas de cabeceras HTTP (`Cache-Control: no-cache, no-store, must-revalidate`) que garantizan que los datos en caché de los navegadores móviles no retengan información desactualizada tras cambios o cierres.
 
 ---
 
@@ -46,5 +53,5 @@
   - *Solución a implementar*: Cooldown de re-sugerencia entre el mismo par de reportes (ej. bloqueo temporal tras 2 rechazos consecutivos) y opción de silenciar/bloquear sugerencias provenientes de una cuenta específica.
 
 - **Limpieza Periódica de Archivos Huérfanos en Storage**:
-  - *Escenario*: Si la subida a Firebase Storage (Paso 1) tiene éxito pero la transacción en Firestore (Paso 2) es abortada (ej. desconexión abrupta o límite de 5 reportes alcanzado), queda una foto huérfana no referenciada.
+  - *Escenario*: Si la subida a Firebase Storage tiene éxito pero la transacción en Firestore es abortada (ej. desconexión abrupta), queda una foto huérfana no referenciada.
   - *Solución a implementar*: Cloud Function programada semanalmente para comparar paths en Storage vs colecciones de Firestore y purgar archivos sin documento asociado.
