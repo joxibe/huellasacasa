@@ -21,14 +21,16 @@
   <meta name="twitter:description" content="Plataforma ciudadana 100% gratuita y solidaria para reportar y buscar mascotas perdidas o encontradas." />
   <meta name="twitter:image" content="https://huellasacasa-23651.web.app/public/assets/img/huellas-promo-banner.jpg" />
 
-  <link rel="icon" type="image/png" href="public/assets/img/favicon.png" />
-  <link rel="apple-touch-icon" href="public/assets/img/favicon.png" />
+  <base href="/" />
+
+  <link rel="icon" type="image/png" href="/public/assets/img/favicon.png" />
+  <link rel="apple-touch-icon" href="/public/assets/img/favicon.png" />
 
   <!-- Theme System CSS Nativo (0 KB de fuentes externas, ultra-liviano para 3G) -->
-  <link rel="stylesheet" href="public/css/theme.css" />
-  <link rel="stylesheet" href="public/css/layout.css" />
-  <link rel="stylesheet" href="public/css/components.css" />
-  <link rel="stylesheet" href="public/css/forms.css" />
+  <link rel="stylesheet" href="/public/css/theme.css" />
+  <link rel="stylesheet" href="/public/css/layout.css" />
+  <link rel="stylesheet" href="/public/css/components.css" />
+  <link rel="stylesheet" href="/public/css/forms.css" />
 </head>
 <body>
   <div class="app-container">
@@ -224,8 +226,8 @@
 
   <!-- Scripts Modulares -->
   <script type="module">
-    import { inicializarBusqueda } from './public/js/ui/busqueda.ui.js';
-    import './public/js/app.js';
+    import { inicializarBusqueda } from '/public/js/ui/busqueda.ui.js';
+    import '/public/js/app.js';
     inicializarBusqueda();
   </script>
 </body>
