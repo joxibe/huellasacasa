@@ -18,5 +18,8 @@
   "license": "MIT",
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^8.0.0"
   }
 }

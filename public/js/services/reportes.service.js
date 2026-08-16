@@ -47,7 +47,7 @@ export function setFechaCreacionTest(id, fechaIso) {
  * Obtiene la lista de reportes de una ciudad seleccionada, aplicando filtros
  * @param {Object} filtros { ciudad, barrioTexto, tipo, especie, texto }
  */
-export async function obtenerReportes(filtros = {}) {
+export async function obtenerReportes(filtros = {}, { limite = 20, ultimoDoc = null } = {}) {
   const { ciudad = 'Cali', barrioTexto, tipo, especie, texto } = filtros;
   const ciudadKey = normalizarTexto(ciudad);
 
@@ -73,10 +73,15 @@ export async function obtenerReportes(filtros = {}) {
 
     let snapshot;
     try {
-      snapshot = await query.orderBy('fechaCreacion', 'desc').get();
+      let q = query.orderBy('fechaCreacion', 'desc');
+      if (ultimoDoc) {
+        q = q.startAfter(ultimoDoc);
+      }
+      q = q.limit(limite);
+      snapshot = await q.get();
     } catch (queryErr) {
-      console.warn('Consulta sin índice compuesto finalizado, ejecutando fallback ordenado en cliente:', queryErr);
-      snapshot = await query.get();
+      console.warn('Consulta sin índice compuesto finalizado, ejecutando fallback:', queryErr);
+      snapshot = await query.limit(limite).get();
     }
     let lista = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -96,6 +101,10 @@ export async function obtenerReportes(filtros = {}) {
         (r.senasVisibles && normalizarTexto(r.senasVisibles).includes(txtNorm))
       );
     }
+
+    const lastDoc = snapshot.docs && snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+    lista.ultimoDoc = lastDoc;
+    lista.hayMas = snapshot.docs ? snapshot.docs.length === limite : false;
     return lista;
   }
 
@@ -142,7 +151,24 @@ export async function obtenerReportes(filtros = {}) {
 
   // Ordenar más recientes primero
   lista.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
-  return lista;
+
+  // Paginación en memoria para tests
+  let startIndex = 0;
+  if (ultimoDoc) {
+    const targetId = typeof ultimoDoc === 'string' ? ultimoDoc : (ultimoDoc.id || null);
+    if (targetId) {
+      const idx = lista.findIndex(r => r.id === targetId);
+      if (idx !== -1) {
+        startIndex = idx + 1;
+      }
+    }
+  }
+
+  const paginada = lista.slice(startIndex, startIndex + limite);
+  const ultimoElemento = paginada[paginada.length - 1] || null;
+  paginada.ultimoDoc = ultimoElemento;
+  paginada.hayMas = startIndex + limite < lista.length;
+  return paginada;
 }
 
 /**

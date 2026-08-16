@@ -111,32 +111,61 @@ export async function inicializarBusqueda() {
   await ejecutarBusqueda();
 }
 
+let reportesAcumulados = [];
+let ultimoDocActual = null;
+let hayMasReportes = false;
+
 /**
- * Ejecuta la consulta de reportes y maneja los 4 Estados UI
+ * Ejecuta la consulta de reportes y maneja los 4 Estados UI con paginación
+ * @param {boolean} cargarMas - Si es true, añade los siguientes 20 reportes al feed
  */
-export async function ejecutarBusqueda() {
+export async function ejecutarBusqueda(cargarMas = false) {
   const container = document.getElementById('reportes-feed-container');
   if (!container) return;
 
-  // Estado 1: Cargando (Skeleton Screen)
-  container.innerHTML = `
-    <div class="skeleton-card">
-      <div class="skeleton-box skeleton-image"></div>
-      <div class="skeleton-box skeleton-title"></div>
-      <div class="skeleton-box skeleton-text"></div>
-    </div>
-    <div class="skeleton-card" style="margin-top: 12px;">
-      <div class="skeleton-box skeleton-image"></div>
-      <div class="skeleton-box skeleton-title"></div>
-      <div class="skeleton-box skeleton-text"></div>
-    </div>
-  `;
+  if (!cargarMas) {
+    reportesAcumulados = [];
+    ultimoDocActual = null;
+    hayMasReportes = false;
+
+    // Estado 1: Cargando (Skeleton Screen)
+    container.innerHTML = `
+      <div class="skeleton-card">
+        <div class="skeleton-box skeleton-image"></div>
+        <div class="skeleton-box skeleton-title"></div>
+        <div class="skeleton-box skeleton-text"></div>
+      </div>
+      <div class="skeleton-card" style="margin-top: 12px;">
+        <div class="skeleton-box skeleton-image"></div>
+        <div class="skeleton-box skeleton-title"></div>
+        <div class="skeleton-box skeleton-text"></div>
+      </div>
+    `;
+  } else {
+    const btnCargarMas = document.getElementById('btn-cargar-mas');
+    if (btnCargarMas) {
+      btnCargarMas.disabled = true;
+      btnCargarMas.textContent = '⏳ Cargando más mascotas...';
+    }
+  }
 
   try {
-    const reportes = await obtenerReportes(filtrosActuales);
+    const nuevosReportes = await obtenerReportes(filtrosActuales, {
+      limite: 20,
+      ultimoDoc: cargarMas ? ultimoDocActual : null
+    });
+
+    if (cargarMas) {
+      reportesAcumulados = [...reportesAcumulados, ...nuevosReportes];
+    } else {
+      reportesAcumulados = [...nuevosReportes];
+    }
+
+    ultimoDocActual = nuevosReportes.ultimoDoc || null;
+    hayMasReportes = Boolean(nuevosReportes.hayMas);
 
     // Estado 2: Vacío
-    if (!reportes || reportes.length === 0) {
+    if (reportesAcumulados.length === 0) {
       container.innerHTML = `
         <div class="ui-state-empty">
           <div class="ui-state-icon">🔍 🐾</div>
@@ -165,18 +194,34 @@ export async function ejecutarBusqueda() {
           if (document.getElementById('input-busqueda-texto')) {
             document.getElementById('input-busqueda-texto').value = '';
           }
-          ejecutarBusqueda();
+          ejecutarBusqueda(false);
         });
       }
       return;
     }
 
-    // Estado 4: Éxito (Render de tarjetas)
+    // Estado 4: Éxito (Render de tarjetas con botón Cargar más)
     container.innerHTML = `
       <div class="pet-cards-grid">
-        ${reportes.map(r => renderReporteCard(r)).join('')}
+        ${reportesAcumulados.map(r => renderReporteCard(r)).join('')}
       </div>
+      ${hayMasReportes ? `
+        <div style="text-align: center; margin: var(--space-lg) 0 var(--space-md);">
+          <button id="btn-cargar-mas" class="btn btn-secondary" style="min-width: 220px; font-weight: 700;">
+            🐾 Cargar más reportes
+          </button>
+        </div>
+      ` : reportesAcumulados.length > 5 ? `
+        <p style="text-align: center; font-size: var(--font-size-xs); color: var(--color-text-muted); margin: var(--space-lg) 0 var(--space-md);">
+          ✓ Has llegado al final de los reportes en ${filtrosActuales.ciudad}
+        </p>
+      ` : ''}
     `;
+
+    const btnCargar = document.getElementById('btn-cargar-mas');
+    if (btnCargar) {
+      btnCargar.addEventListener('click', () => ejecutarBusqueda(true));
+    }
 
   } catch (error) {
     // Estado 3: Error
@@ -196,7 +241,7 @@ export async function ejecutarBusqueda() {
 
     const btnReintentar = document.getElementById('btn-reintentar-busqueda');
     if (btnReintentar) {
-      btnReintentar.addEventListener('click', ejecutarBusqueda);
+      btnReintentar.addEventListener('click', () => ejecutarBusqueda(false));
     }
   }
 }

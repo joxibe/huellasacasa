@@ -32,7 +32,10 @@ Este documento detalla cada página HTML de la plataforma, su propósito, sus co
      - Foto optimizada, badge de estado con color distintivo, especie, sexo, tamaño, señas visibles y ubicación aproximada.
      - Identificador único `🆔 ID` visible para sugerir coincidencias.
      - Botón directo `🔍 Ver detalles`.
-  6. **Barra de navegación inferior (Móvil):** Accesos directos ergonómicos a *Explorar*, *Guía*, *+ Publicar*, *Mis Reportes* y *Privacidad*.
+  6. **Paginación Eficiente (`.limit(20)` y `startAfter()`):**
+     - La consulta inicial carga un bloque liviano de 20 reportes.
+     - Si existen más publicaciones en la ciudad, se muestra el botón interactivo `🐾 Cargar más reportes`.
+  7. **Barra de navegación inferior (Móvil):** Accesos directos ergonómicos a *Explorar*, *Guía*, *+ Publicar*, *Mis Reportes* y *Privacidad*.
 
 ---
 

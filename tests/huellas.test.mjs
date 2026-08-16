@@ -264,6 +264,26 @@ assert(soloEncontrados.length > 0 && soloEncontrados.every(r => r.tipo === 'enco
 const porBarrio = await obtenerReportes({ ciudad: 'Cali', barrioTexto: 'San Antonio' });
 assert(porBarrio.length > 0 && porBarrio.every(r => r.barrio && r.barrio.toLowerCase().includes('san antonio')), 'obtenerReportes — Filtro por barrio');
 
+// Test de Paginación (.limit(20) y startAfter())
+// Crear 25 reportes en Bogotá con distintos usuarios
+for (let i = 1; i <= 25; i++) {
+  setTestUser({ uid: `usr_pag_${i}`, email: `pag${i}@test.com`, displayName: `User ${i}` });
+  await crearReporte(datosBase('perdido', {
+    nombre: `Mascota Paginada ${i}`,
+    ciudad: 'Bogotá',
+    barrio: 'Chapinero'
+  }));
+}
+
+const pagina1 = await obtenerReportes({ ciudad: 'Bogotá' });
+assert(pagina1.length === 20, `Paginación — Consulta inicial con 25 reportes solo trae 20 (actual: ${pagina1.length})`);
+assert(pagina1.hayMas === true, 'Paginación — Bandera hayMas es true en la primera página');
+assert(pagina1.ultimoDoc !== null, 'Paginación — ultimoDoc disponible para siguiente página');
+
+const pagina2 = await obtenerReportes({ ciudad: 'Bogotá' }, { limite: 20, ultimoDoc: pagina1.ultimoDoc });
+assert(pagina2.length === 5, `Paginación — Segunda página con startAfter trae los 5 restantes (actual: ${pagina2.length})`);
+assert(pagina2.hayMas === false, 'Paginación — Bandera hayMas es false al llegar al final');
+
 // ═══════════════════════════════════════════════════════════════════════════
 // BLOQUE 6: Flujo de Coincidencias Bilateral y Cierre "Reunido"
 // ═══════════════════════════════════════════════════════════════════════════

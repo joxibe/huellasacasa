@@ -111,3 +111,20 @@ publica solo y más rápido.
    - Borra el documento en `/reportes_abuso` para archivar la denuncia.
 3. **Recepción Automática de Alertas por Correo (Post-MVP):**
    - Puedes instalar la extensión oficial **"Trigger Email from Firestore"** en la consola de Firebase configurando tu correo `jxrosero3@gmail.com` para recibir alertas inmediatas cuando se cree un documento en `/reportes_abuso`.
+
+---
+
+## 9. Políticas de Caché y Rendimiento de Red
+
+Para garantizar que la web cargue al instante sin consumir datos móviles innecesarios y sin atascar a los usuarios en versiones desactualizadas tras un deploy:
+
+1. **Documentos HTML (`firebase.json`):**
+   - Cabecera: `Cache-Control: no-cache, must-revalidate`.
+   - **Efecto:** El navegador siempre revalida con el servidor si hay una versión nueva tras un `firebase deploy`, pero **permite el Back-Forward Cache (bfcache)** del navegador, evitando recargas completas al pulsar "Atrás".
+2. **Archivos Estáticos JS/CSS (`firebase.json`):**
+   - Cabecera: `Cache-Control: no-cache, must-revalidate`.
+3. **Fotos en Cloud Storage (`storage.service.js`):**
+   - Cabecera de metadatos: `cacheControl: 'public, max-age=604800'` (7 días).
+   - **Efecto:** Cada foto de mascota se descarga **una sola vez** (~140KB) y se sirve desde la memoria/disco del teléfono en **0 ms** durante 7 días.
+4. **Script de Migración de Caché (`scripts/actualizar-cache-fotos.js`):**
+   - Actualiza en lote el metadato `cacheControl` de todos los archivos existentes bajo `reportes/` en Cloud Storage. Ejecutable con: `node scripts/actualizar-cache-fotos.js`.
