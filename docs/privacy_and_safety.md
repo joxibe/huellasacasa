@@ -36,21 +36,29 @@
    - El creador puede eliminar su publicación en cualquier momento desde *Mis Reportes* o desde la vista de *Detalle*.
    - El proceso de eliminación es integral: borra el documento público `/reportes/{id}`, las subcolecciones `/privado/contacto` y `/privado/seguridad`, el archivo de imagen en Cloud Storage, desvincula automáticamente a la contraparte si había un match activo y libera el cupo de la cuenta.
 
-7. **Moderación Comunitaria y Gestión de Denuncias (`/reportes_abuso`):**
+7. **Moderación Comunitaria y Protocolo de Administración (`/reportes_abuso`):**
    - **Autenticación obligatoria:** Solo usuarios con sesión activa de Google pueden reportar una publicación, previniendo bots o ataques anónimos.
    - **Anti-inflado por ID determinista:** Las denuncias se guardan con ID `${reporteId}_${usuarioDenuncianteUid}`. Si un usuario reporta varias veces el mismo caso, sobreescribe su registro sin duplicar conteos.
-   - **Aislamiento total y sigilo:** El documento público `/reportes/{id}` **NO contiene ningún campo ni contador de denuncias**. Las alertas van directo a `/reportes_abuso` con `allow read: if false;`, evitando alertar a potenciales estafadores.
-   - **Protocolo de gestión para el administrador:**
-     1. Ingresar a la [Consola de Firebase](https://console.firebase.google.com/project/huellasacasa-23651/firestore) > `reportes_abuso`.
-     2. Revisar `reporteId`, `motivo`, `comentario` y `usuarioDenuncianteEmail`.
-     3. Inspeccionar la publicación en vivo: `https://huellasacasa-23651.web.app/detalle.html?id={reporteId}`.
-     4. Si amerita sanción, eliminar el documento en `/reportes/{reporteId}` y su foto en Storage.
-     5. Eliminar la denuncia en `/reportes_abuso` una vez procesada.
+   - **Aislamiento total y sigilo:** El documento público `/reportes/{id}` **NO contiene ningún campo ni contador de denuncias**. Las alertas van directo a `/reportes_abuso` accesible únicamente por el administrador.
+   - **Administrador Designado:**
+     - **UID:** `7KRsQ64BAWeLIQWdRpsfHri1LbD2`
+     - **Cuenta:** `huellasacasa1008@gmail.com`
+     - **URL de Panel:** [`/admin`](https://huellasacasa-23651.web.app/admin) (sin enlace público en la navegación ordinaria).
+   - **Alcance de Permisos del Administrador (Principio de Mínimo Privilegio - PoLP):**
+     - **Lo que SÍ puede hacer el Administrador:**
+       1. Leer y listar todas las alertas de la comunidad en `/reportes_abuso`.
+       2. Descartar y borrar denuncias resueltas de `/reportes_abuso`.
+       3. Eliminar publicaciones denunciadas `/reportes/{id}` y sus subcolecciones en cascada.
+       4. Borrar fotos de reportes infractores en Firebase Storage.
+     - **Lo que NO puede hacer el Administrador (Blindaje Estricto en Reglas de Firestore):**
+       1. **NO puede leer la seña secreta de nadie:** `/privado/seguridad` tiene la regla `allow read: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;`. No existe ninguna cláusula `isAdmin()` para lectura; solo el dueño original puede verla.
+       2. **NO tiene bypass para datos de contacto:** `/privado/contacto` solo se consulta bajo la regla estándar de usuario autenticado.
+       3. **NO puede editar o alterar el contenido de reportes ajenos:** Solo tiene permiso de borrado (`delete`), impidiendo cualquier manipulación de datos.
 
-8. **Minimización, Sin Trackers y Cache-Control Limpio:**
+8. **Minimización, Sin Trackers y Políticas de Caché:**
    - Sin librerías de tracking publicitario ni cookies de terceros.
    - Compresión local de imágenes en el dispositivo (< 300KB) antes de la subida a Storage.
-   - Políticas de cabeceras HTTP (`Cache-Control: no-cache, no-store, must-revalidate`) que garantizan que los datos en caché de los navegadores móviles no retengan información desactualizada tras cambios o cierres.
+   - Políticas de cabeceras HTTP (`Cache-Control: no-cache, must-revalidate`) que permiten *Back-Forward Cache* instantáneo sin retener datos desactualizados tras un deploy.
 
 ---
 

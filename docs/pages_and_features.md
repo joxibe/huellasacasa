@@ -104,12 +104,24 @@ Este documento detalla cada página HTML de la plataforma, su propósito, sus co
 
 ---
 
-## 🛡️ 7. Panel de Moderación (`admin.html`)
+## 🛡️ 7. Panel de Moderación y Denuncias (`admin.html` / `/admin`)
 
-- **Propósito:** Panel privado de administración para el moderador.
-- **Acceso:** Exclusivo para el UID `7KRsQ64BAWeLIQWdRpsfHri1LbD2` (`huellasacasa1008@gmail.com`).
-- **Acciones:**
-  - Visualizar la cola de denuncias comunitarias de `/reportes_abuso`.
-  - Inspeccionar el caso denunciado (`🔍 Inspeccionar publicación`).
-  - Descartar denuncias infundadas (`✓ Descartar alerta`).
-  - Eliminar publicaciones infractoras (`🗑️ Eliminar publicación`), borrando atómicamente el documento en Firestore, la foto en Storage, las subcolecciones privadas y liberando el cupo del autor.
+- **Propósito:** Centro de control administrativo confidencial para que el moderador designado revise las alertas de la comunidad sobre publicaciones sospechosas, fraudulentas o infractoras.
+- **Acceso y Visibilidad:**
+  - **Sin enlace público:** No existe ningún botón ni enlace a `admin.html` en la navegación pública general ni en el pie de página.
+  - **Acceso exclusivo para el administrador:** Cuando el usuario autenticado coincide con el UID `7KRsQ64BAWeLIQWdRpsfHri1LbD2` (`huellasacasa1008@gmail.com`), su avatar muestra una insignia roja y al tocarlo se despliega el acceso directo: `🛡️ Ir al Panel de Moderación`.
+  - **Validación de Seguridad Asíncrona:** Si un visitante anónimo o un usuario autenticado estándar intenta acceder a `/admin`, el controlador `admin.ui.js` bloquea la pantalla mostrando inmediatamente el estado: `🚫 Acceso no autorizado`.
+- **Componentes y Acciones Detalladas:**
+  1. **Contador de Alertas:** Muestra el número total de reportes pendientes de moderación en la colección `/reportes_abuso`.
+  2. **Tarjeta de Denuncia Individual:**
+     - **Encabezado y Motivo:** Distintivo en rojo con el tipo de alerta (*Spam o Fraude, Datos falsos, Foto inapropiada, Anuncio duplicado, etc.*) y fecha relativa.
+     - **Comentario del Denunciante:** Mensaje explicativo escrito por el usuario que levantó el reporte.
+     - **Metadatos del Caso:** Identificador `🆔 Reporte ID` y correo/UID del denunciante.
+  3. **Botones de Acción por Denuncia:**
+     - **`🔍 Inspeccionar publicación`:** Abre la ficha pública (`detalle.html?id=...`) en una pestaña nueva para examinar visualmente las fotos, descripciones y datos publicados.
+     - **`✓ Descartar alerta`:** Si la denuncia fue infundada o resuelta, elimina el documento de `/reportes_abuso/{id}` de la cola sin alterar la publicación original de la mascota.
+     - **`🗑️ Eliminar publicación`:** Si se confirma una infracción o fraude:
+       1. Despliega el **Modal de Confirmación de Peligro** advirtiendo sobre el borrado irreversible.
+       2. Ejecuta `eliminarReporteDenunciado()`, que borra atómicamente el documento en `/reportes/{id}`, sus subcolecciones privadas `/privado/contacto` y `/privado/seguridad`, la foto en Cloud Storage y desvincula cualquier match activo.
+       3. Decrementa los contadores de reportes activos en `/usuarios/{creadorUid}` para mantener la integridad de cuotas.
+       4. Borra automáticamente la denuncia de `/reportes_abuso`.

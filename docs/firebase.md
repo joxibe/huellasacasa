@@ -128,3 +128,20 @@ Para garantizar que la web cargue al instante sin consumir datos móviles innece
    - **Efecto:** Cada foto de mascota se descarga **una sola vez** (~140KB) y se sirve desde la memoria/disco del teléfono en **0 ms** durante 7 días.
 4. **Script de Migración de Caché (`scripts/actualizar-cache-fotos.js`):**
    - Actualiza en lote el metadato `cacheControl` de todos los archivos existentes bajo `reportes/` en Cloud Storage. Ejecutable con: `node scripts/actualizar-cache-fotos.js`.
+
+---
+
+## 10. URLs Limpias (`cleanUrls`) y la Etiqueta `<base href="/">`
+
+En `firebase.json`, se encuentra activa la directiva:
+```json
+"hosting": {
+  "cleanUrls": true
+}
+```
+
+### ⚠️ Regla de Arquitectura Crítica: NUNCA eliminar `<base href="/">` de los archivos HTML
+
+- **¿Qué hace `cleanUrls: true`?** Transforma las rutas visibles del navegador de `/mis-reportes.html` a `/mis-reportes` (eliminando la extensión `.html` de la URL).
+- **El problema con las rutas relativas:** Cuando el navegador está en una URL limpia como `/mis-reportes`, cualquier recurso con ruta relativa (ej. `<link href="public/css/theme.css">` o `import './public/js/app.js'`) intenta resolverse contra `/mis-reportes/public/...` en lugar de la raíz `/public/...`, provocando errores 404 y demoras críticas en la inicialización de Firebase Auth.
+- **La solución permanente:** Cada archivo HTML contiene `<base href="/" />` en el `<head>`. Esto fuerza a que **absolutamente todos** los estilos, scripts modulares, fuentes y assets se resuelvan siempre desde la raíz del dominio (`/`), garantizando que la sesión cargue al instante y sin parpadeos.
