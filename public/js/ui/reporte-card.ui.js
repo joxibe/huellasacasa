@@ -42,6 +42,7 @@ export function renderReporteCard(reporte) {
             alt="${nombreDisplay} - ${infoEspecie.label}" 
             class="pet-card-img" 
             loading="lazy"
+            decoding="async"
           />
           <div class="pet-card-status-badge">
             <span class="badge-status" data-status="${reporte.estado}">${estadoLabel}</span>

@@ -104,7 +104,7 @@ function renderDetalleContenido(container, reporte) {
       
       <div class="detail-desktop-grid" style="background-color: var(--color-bg-card); border-radius: var(--radius-xl); overflow: hidden; border: 1px solid var(--color-border); box-shadow: var(--shadow-card);">
         <div style="position: relative; width: 100%; height: 100%; min-height: 300px; background-color: var(--color-bg-muted);">
-          <img src="${reporte.fotoUrl}" alt="${reporte.nombre || 'Mascota'}" style="width: 100%; height: 100%; object-fit: cover;" />
+          <img src="${reporte.fotoUrl}" alt="${reporte.nombre || 'Mascota'}" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" />
           <div style="position: absolute; top: 12px; left: 12px;">
             <span class="badge-status" data-status="${reporte.estado}">${estadoLabel}</span>
           </div>
@@ -363,7 +363,7 @@ async function abrirModalBuscadorVisualCoincidencia(reporteActual) {
 
     listaContainer.innerHTML = items.map(c => `
       <div style="display: flex; gap: 10px; align-items: center; background: var(--color-bg-card); border: 1px solid var(--color-border); padding: 8px 10px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
-        <img src="${c.fotoUrl}" alt="${c.nombre || 'Mascota'}" style="width: 60px; height: 60px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0;" />
+        <img src="${c.fotoUrl}" alt="${c.nombre || 'Mascota'}" loading="lazy" decoding="async" style="width: 60px; height: 60px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0;" />
         <div style="flex: 1; font-size: var(--font-size-xs); line-height: 1.3;">
           <div style="font-weight: 700; color: var(--color-text-primary);">${c.nombre || (c.tipo === 'encontrado' ? 'Encontrada' : 'Perdida')}</div>
           <div style="color: var(--color-text-secondary);">${formatearEspecie(c.especie).icon} ${c.barrio ? `${c.barrio}, ` : ''}${c.ciudad}</div>

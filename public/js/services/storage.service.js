@@ -42,6 +42,7 @@ export async function subirFotoReporte(imageBlob, nombreReporteId) {
     const storageRef = window.firebase.storage().ref(storagePath);
     const metadata = {
       contentType: imageBlob.type || 'image/jpeg',
+      cacheControl: 'public, max-age=604800',
       customMetadata: {
         reporteId: nombreReporteId,
         subidoEn: new Date().toISOString()

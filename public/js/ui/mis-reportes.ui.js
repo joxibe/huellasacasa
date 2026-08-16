@@ -180,7 +180,7 @@ async function renderMiReporteItemAsync(reporte, userUid) {
     const contraparte = await obtenerReportePorId(reporte.coincidenciaConReporteId);
     const contraInfo = contraparte ? `
       <div style="display: flex; gap: 10px; align-items: center; background: #FFFFFF; padding: 8px; border-radius: var(--radius-sm); margin: 8px 0;">
-        <img src="${contraparte.fotoUrl}" style="width: 54px; height: 54px; border-radius: var(--radius-xs); object-fit: cover;" />
+        <img src="${contraparte.fotoUrl}" alt="${contraparte.nombre || 'Mascota'}" loading="lazy" decoding="async" style="width: 54px; height: 54px; border-radius: var(--radius-xs); object-fit: cover;" />
         <div style="font-size: var(--font-size-xs); line-height: 1.3;">
           <strong>${contraparte.nombre || 'Mascota'}</strong> (${formatearEspecie(contraparte.especie).label})<br/>
           📍 ${contraparte.barrio ? `${contraparte.barrio}, ` : ''}${contraparte.ciudad}<br/>
@@ -229,7 +229,7 @@ async function renderMiReporteItemAsync(reporte, userUid) {
   return `
     <div class="pet-card" style="margin-bottom: var(--space-md); padding: var(--space-md);" id="item-${reporte.id}">
       <div style="display: flex; gap: var(--space-sm);">
-        <img src="${reporte.fotoUrl}" style="width: 80px; height: 80px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;" />
+        <img src="${reporte.fotoUrl}" alt="${reporte.nombre || 'Mascota'}" loading="lazy" decoding="async" style="width: 80px; height: 80px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;" />
         <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <div style="display: flex; align-items: baseline; justify-content: space-between;">
