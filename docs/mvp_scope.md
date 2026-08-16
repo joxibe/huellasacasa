@@ -4,6 +4,17 @@
 
 ---
 
+## 📚 Índice de Documentación Técnica
+
+- 🗺️ **[Mapa de Pantallas y Funcionalidades](pages_and_features.md)**: Explicación de cada página `.html`, botones y componentes.
+- 🔄 **[Flujo de Estados y Ciclo de Vida](report_flow.md)**: Máquina de estados, buscador visual y confirmación bilateral.
+- 🗄️ **[Modelo de Datos y Subcolecciones](data_model.md)**: Esquema de Firestore y reglas de privacidad.
+- 🛡️ **[Privacidad, Seguridad y Anti-Fraude](privacy_and_safety.md)**: Señas secretas, cuotas y protocolo de moderación.
+- 📜 **[Política de Tratamiento de Datos](privacy_policy.md)**: Marco legal Ley 1581 de 2012.
+- 🚀 **[Guía de Firebase y Comandos](firebase.md)**: Hosting, reglas, emuladores y despliegue.
+
+---
+
 ## 🎯 Objetivo
 
 Facilitar la conexión directa, rápida y segura entre personas que perdieron una mascota y quienes encontraron una, con costo cero de operación, alta seguridad anti-fraude y consumo mínimo de datos móviles (optimizado para redes 3G).
