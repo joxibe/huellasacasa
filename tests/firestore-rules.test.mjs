@@ -53,7 +53,9 @@ async function runFirestoreRulesTests() {
   try {
     const creatorUid = 'usr_dueno_123';
     const strangerUid = 'usr_extrano_456';
+    const adminUid = '7KRsQ64BAWeLIQWdRpsfHri1LbD2';
     const reporteId = 'rep_test_001';
+    const reporteParaAdminId = 'rep_admin_delete_001';
 
     // ── Fixture: Preparar documento de reporte y usuario en Firestore (sin reglas) ──
     await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -81,6 +83,41 @@ async function runFirestoreRulesTests() {
         coincidenciaConReporteId: null
       });
 
+      await db.collection('reportes').doc(reporteParaAdminId).set({
+        id: reporteParaAdminId,
+        creadorUid: creatorUid,
+        tipo: 'perdido',
+        estado: 'perdido',
+        nombre: 'Mascota Denunciada',
+        ciudad: 'Cali',
+        ciudadLower: 'cali',
+        fechaCreacion: new Date().toISOString(),
+        fechaActualizacion: new Date().toISOString(),
+        confirmadoPorCreador: false,
+        confirmadoPorContraparte: false,
+        coincidenciaConReporteId: null
+      });
+
+      await db.collection('reportes').doc(reporteParaAdminId).collection('privado').doc('contacto').set({
+        telefonoContacto: '3161234567',
+        medioContacto: 'whatsapp',
+        creadorUid: creatorUid
+      });
+
+      await db.collection('reportes').doc(reporteParaAdminId).collection('privado').doc('seguridad').set({
+        senaVerificacionPrivada: 'Cicatriz',
+        creadorUid: creatorUid
+      });
+
+      await db.collection('reportes_abuso').doc('denuncia_001').set({
+        reporteId: reporteParaAdminId,
+        motivo: 'spam_o_fraude',
+        comentario: 'Anuncio falso',
+        usuarioDenuncianteUid: strangerUid,
+        usuarioDenuncianteEmail: 'extrano@gmail.com',
+        fechaCreacion: new Date().toISOString()
+      });
+
       await db.collection('reportes').doc(reporteId).collection('privado').doc('contacto').set({
         telefonoContacto: '3161234567',
         medioContacto: 'whatsapp',
@@ -88,7 +125,7 @@ async function runFirestoreRulesTests() {
       });
 
       await db.collection('reportes').doc(reporteId).collection('privado').doc('seguridad').set({
-        senaVerificacionPrivada: 'Cicatriz pata trasera',
+        senaVerificacionPrivada: 'Mancha en oreja derecha',
         creadorUid: creatorUid
       });
 
@@ -102,6 +139,7 @@ async function runFirestoreRulesTests() {
     const unauthedDb = testEnv.unauthenticatedContext().firestore();
     const creatorDb = testEnv.authenticatedContext(creatorUid).firestore();
     const strangerDb = testEnv.authenticatedContext(strangerUid).firestore();
+    const adminDb = testEnv.authenticatedContext(adminUid).firestore();
 
     // ── CASO 1: [BLOCKED] Un usuario NO autenticado no puede leer /reportes/{id}/privado/contacto ──
     try {
@@ -363,6 +401,41 @@ async function runFirestoreRulesTests() {
       record(18, '[ALLOWED] Creador legítimo puede borrar su reporte y sus subcolecciones privadas', true);
     } catch (e) {
       record(18, '[ALLOWED] Creador legítimo puede borrar su reporte y sus subcolecciones privadas', false, e.message);
+    }
+
+    // ── CASO 19: [BLOCKED] Usuario regular autenticado bloqueado de leer /reportes_abuso ──
+    try {
+      await assertFails(strangerDb.collection('reportes_abuso').doc('denuncia_001').get());
+      await assertFails(strangerDb.collection('reportes_abuso').get());
+      record(19, '[BLOCKED] Usuario regular bloqueado de leer denuncias de /reportes_abuso', true);
+    } catch (e) {
+      record(19, '[BLOCKED] Usuario regular bloqueado de leer denuncias de /reportes_abuso', false, e.message);
+    }
+
+    // ── CASO 20: [ALLOWED] Administrador (UID 7KRsQ64BAWeLIQWdRpsfHri1LbD2) SÍ puede leer /reportes_abuso ──
+    try {
+      await assertSucceeds(adminDb.collection('reportes_abuso').doc('denuncia_001').get());
+      record(20, '[ALLOWED] Administrador SÍ puede leer denuncias de /reportes_abuso', true);
+    } catch (e) {
+      record(20, '[ALLOWED] Administrador SÍ puede leer denuncias de /reportes_abuso', false, e.message);
+    }
+
+    // ── CASO 21: [ALLOWED] Administrador SÍ puede borrar reportes ajenos y sus subcolecciones ──
+    try {
+      await assertSucceeds(adminDb.collection('reportes').doc(reporteParaAdminId).collection('privado').doc('contacto').delete());
+      await assertSucceeds(adminDb.collection('reportes').doc(reporteParaAdminId).collection('privado').doc('seguridad').delete());
+      await assertSucceeds(adminDb.collection('reportes').doc(reporteParaAdminId).delete());
+      record(21, '[ALLOWED] Administrador puede borrar reportes ajenos infractores y sus subcolecciones', true);
+    } catch (e) {
+      record(21, '[ALLOWED] Administrador puede borrar reportes ajenos infractores y sus subcolecciones', false, e.message);
+    }
+
+    // ── CASO 22: [ALLOWED] Administrador SÍ puede borrar denuncias procesadas de /reportes_abuso ──
+    try {
+      await assertSucceeds(adminDb.collection('reportes_abuso').doc('denuncia_001').delete());
+      record(22, '[ALLOWED] Administrador puede borrar denuncias resueltas de /reportes_abuso', true);
+    } catch (e) {
+      record(22, '[ALLOWED] Administrador puede borrar denuncias resueltas de /reportes_abuso', false, e.message);
     }
 
     console.log('\n════════════════════════════════════════════════════════════');

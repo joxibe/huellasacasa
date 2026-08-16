@@ -796,6 +796,8 @@ export async function reportarAbuso(reporteId, motivo, comentario = '') {
   return { success: true };
 }
 
+export const ADMIN_UID = '7KRsQ64BAWeLIQWdRpsfHri1LbD2';
+
 /**
  * Elimina un reporte, sus subcolecciones privadas, su foto en Storage y libera la cuota
  * @param {string} reporteId 
@@ -809,8 +811,9 @@ export async function eliminarReporte(reporteId) {
   const rep = await obtenerReportePorId(reporteId);
   if (!rep) throw new Error('Reporte no encontrado.');
 
-  if (rep.creadorUid !== user.uid) {
-    throw new Error('Solo el autor puede eliminar este reporte.');
+  const esAdmin = user.uid === ADMIN_UID;
+  if (rep.creadorUid !== user.uid && !esAdmin) {
+    throw new Error('Solo el autor o un administrador pueden eliminar este reporte.');
   }
 
   const db = asegurarFirestore();
@@ -847,23 +850,23 @@ export async function eliminarReporte(reporteId) {
     }
   }
 
-  // 3. Eliminar documentos en Firestore y liberar cupo
+  // 3. Eliminar documentos en Firestore y liberar cupo del autor original
   if (db) {
     await db.runTransaction(async (transaction) => {
       const repRef = db.collection('reportes').doc(reporteId);
       const contactoRef = repRef.collection('privado').doc('contacto');
       const seguridadRef = repRef.collection('privado').doc('seguridad');
-      const userRef = db.collection('usuarios').doc(user.uid);
+      const creatorRef = db.collection('usuarios').doc(rep.creadorUid);
 
       transaction.delete(contactoRef);
       transaction.delete(seguridadRef);
       transaction.delete(repRef);
 
-      // Si el reporte estaba activo, decrementar cuotas
+      // Si el reporte estaba activo, decrementar cuotas del creador original
       if (rep.estado !== 'reunido' && rep.estado !== 'adoptado') {
         const isPerdido = rep.tipo === 'perdido';
         const isAdopcion = rep.tipo === 'en_adopcion';
-        transaction.update(userRef, {
+        transaction.update(creatorRef, {
           reportesActivosCount: window.firebase.firestore.FieldValue.increment(-1),
           perdidosActivosCount: isPerdido ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
           encontradosActivosCount: (!isPerdido && !isAdopcion) ? window.firebase.firestore.FieldValue.increment(-1) : window.firebase.firestore.FieldValue.increment(0),
@@ -882,6 +885,64 @@ export async function eliminarReporte(reporteId) {
   }
   delete testContactosStore[reporteId];
   delete testSeguridadStore[reporteId];
+
+  return { success: true };
+}
+
+/**
+ * Consulta todas las denuncias registradas en /reportes_abuso (Exclusivo para Admin)
+ */
+export async function obtenerDenunciasAbuso() {
+  const user = getCurrentUser();
+  if (!user || user.uid !== ADMIN_UID) {
+    throw new Error('Acceso no autorizado: se requieren permisos de administrador.');
+  }
+
+  const db = asegurarFirestore();
+  if (!db) return [];
+
+  const snapshot = await db.collection('reportes_abuso')
+    .orderBy('fechaCreacion', 'desc')
+    .get();
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+}
+
+/**
+ * Descarta/archiva una denuncia sin eliminar el reporte
+ */
+export async function descartarDenuncia(reporteAbusoId) {
+  const user = getCurrentUser();
+  if (!user || user.uid !== ADMIN_UID) {
+    throw new Error('Acceso no autorizado: se requieren permisos de administrador.');
+  }
+
+  const db = asegurarFirestore();
+  if (db) {
+    await db.collection('reportes_abuso').doc(reporteAbusoId).delete();
+  }
+  return { success: true };
+}
+
+/**
+ * Elimina una publicación denunciada y luego borra la denuncia de la cola
+ */
+export async function eliminarReporteDenunciado(reporteId, reporteAbusoId) {
+  const user = getCurrentUser();
+  if (!user || user.uid !== ADMIN_UID) {
+    throw new Error('Acceso no autorizado: se requieren permisos de administrador.');
+  }
+
+  // 1. Eliminar el reporte (reutiliza eliminarReporte con permisos de admin)
+  await eliminarReporte(reporteId);
+
+  // 2. Borrar la denuncia de la cola de moderación
+  if (reporteAbusoId) {
+    await descartarDenuncia(reporteAbusoId);
+  }
 
   return { success: true };
 }

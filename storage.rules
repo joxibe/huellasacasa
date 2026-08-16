@@ -1,6 +1,11 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == '7KRsQ64BAWeLIQWdRpsfHri1LbD2';
+    }
+
     match /reportes/{reporteId}/{fileName} {
       // Lectura pública de fotos de mascotas para el explorador
       allow read: if true;
@@ -11,19 +16,23 @@ service firebase.storage {
                     && request.resource.size < 500 * 1024
                     && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)');
 
-      // Sobrescritura permitida ÚNICAMENTE al creador original del reporte registrado en Firestore
+      // Sobrescritura permitida al creador original o al administrador
       allow update: if request.auth != null
                     && resource != null
                     && request.resource.size < 500 * 1024
                     && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)')
-                    && firestore.exists(/databases/(default)/documents/reportes/$(reporteId))
-                    && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid;
+                    && (isAdmin() || (
+                      firestore.exists(/databases/(default)/documents/reportes/$(reporteId)) &&
+                      firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid
+                    ));
 
-      // Eliminación permitida ÚNICAMENTE al creador original del reporte registrado en Firestore
+      // Eliminación permitida al creador original del reporte o al administrador
       allow delete: if request.auth != null
                     && resource != null
-                    && firestore.exists(/databases/(default)/documents/reportes/$(reporteId))
-                    && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid;
+                    && (isAdmin() || (
+                      firestore.exists(/databases/(default)/documents/reportes/$(reporteId)) &&
+                      firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.creadorUid == request.auth.uid
+                    ));
     }
   }
 }

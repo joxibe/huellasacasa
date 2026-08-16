@@ -554,7 +554,7 @@ assert(repEliminar.id !== undefined, 'eliminarReporte — Reporte creado exitosa
 setTestUser({ uid: 'usr_extrano', email: 'extrano@test.com', displayName: 'Extraño' });
 await assertThrows(
   () => eliminarReporte(repEliminar.id),
-  'Solo el autor puede eliminar este reporte',
+  'Solo el autor o un administrador pueden eliminar este reporte',
   'eliminarReporte — Rechaza intento de eliminación por un usuario ajeno'
 );
 
@@ -579,6 +579,14 @@ assert(repB_match.coincidenciaConReporteId === repA_match.id, 'eliminarReporte �
 await eliminarReporte(repB_match.id);
 assert(repA_match.coincidenciaConReporteId === null, 'eliminarReporte — Contraparte queda desvinculada');
 assert(repA_match.estado === 'perdido', 'eliminarReporte — Contraparte regresa a su estado base');
+
+// Borrado por Administrador con UID legítimo
+const repParaAdmin = await crearReporte(datosBase('perdido', { nombre: 'Reporte Denunciado' }));
+setTestUser({ uid: '7KRsQ64BAWeLIQWdRpsfHri1LbD2', email: 'huellasacasa1008@gmail.com', displayName: 'Admin' });
+const resAdminDel = await eliminarReporte(repParaAdmin.id);
+assert(resAdminDel.success === true, 'eliminarReporte — Administrador puede eliminar reporte ajeno');
+const repAdminDeleted = await obtenerReportePorId(repParaAdmin.id);
+assert(repAdminDeleted === null, 'eliminarReporte — Reporte ajeno borrado por admin ya no existe');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RESUMEN

@@ -6,6 +6,11 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
+
+    // Función auxiliar: Administrador del sistema
+    function isAdmin() {
+      return isAuthenticated() && request.auth.uid == '7KRsQ64BAWeLIQWdRpsfHri1LbD2';
+    }
     
     // Función auxiliar: Es el dueño del recurso
     function isOwner(uid) {
@@ -147,29 +152,31 @@ service cloud.firestore {
         )
       );
 
-      // Eliminación: Solo el creador
-      allow delete: if isAuthenticated() && request.auth.uid == resource.data.creadorUid;
+      // Eliminación: Creador legítimo o Administrador del sistema
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.creadorUid || isAdmin());
 
       // 3. Subcolección privada: Contacto y Seguridad
       // 3a. Datos de contacto: Cualquier usuario autenticado puede leer para contactar al publicador
       match /privado/contacto {
         allow read: if isAuthenticated();
         allow create: if isAuthenticated() && request.resource.data.creadorUid == request.auth.uid;
-        allow update, delete: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
+        allow update: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
+        allow delete: if isAuthenticated() && (resource.data.creadorUid == request.auth.uid || isAdmin());
       }
 
       // 3b. Seña secreta de seguridad: ÚNICAMENTE accesible por el creador original del reporte
       match /privado/seguridad {
         allow read: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
         allow create: if isAuthenticated() && request.resource.data.creadorUid == request.auth.uid;
-        allow update, delete: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
+        allow update: if isAuthenticated() && resource.data.creadorUid == request.auth.uid;
+        allow delete: if isAuthenticated() && (resource.data.creadorUid == request.auth.uid || isAdmin());
       }
     }
 
     // 4. Reportes de abuso / moderación comunitaria
     match /reportes_abuso/{reporteAbusoId} {
       allow create: if isAuthenticated() && request.resource.data.usuarioDenuncianteUid == request.auth.uid;
-      allow read: if false; // Solo accesible por backend/admin
+      allow read, delete: if isAdmin();
     }
   }
 }
